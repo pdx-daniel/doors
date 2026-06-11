@@ -4,25 +4,12 @@ import {useApiHealth} from './src/hooks/useApiHealth';
 import type {ApiHealthStatus} from './src/hooks/useApiHealth';
 import {MapScreen} from './src/screens/MapScreen';
 
-/** Human-readable label for the dev health banner. */
-function formatHealthStatus(status: ApiHealthStatus): string {
-  switch (status) {
-    case 'checking':
-      return 'checking…';
-    case 'ok':
-      return 'ok';
-    case 'offline':
-      return 'offline';
-    case 'unknown':
-      return 'unknown';
-  }
-}
 
 /**
  * Root application shell: optional API status banner plus full-screen map.
  * Renders the map even when the backend is unreachable.
  */
-function App() {
+export default function App() {
   const healthStatus = useApiHealth();
   const [bannerVisible, setBannerVisible] = useState(true);
 
@@ -85,4 +72,17 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+
+/** Human-readable label for the dev health banner. */
+function formatHealthStatus(status: ApiHealthStatus): string {
+  switch (status) {
+    case 'checking':
+      return 'checking…';
+    case 'ok':
+      return 'ok';
+    case 'offline':
+      return 'offline';
+    case 'unknown':
+      return 'unknown';
+  }
+}
