@@ -24,7 +24,11 @@
     "check:unsafe": "biome check --write --unsafe .",
     "ci": "biome ci .",
     "typecheck": "bun run --filter '*' typecheck",
-    "basemap:refresh": "make basemap-refresh"
+    "basemap:refresh": "make basemap-refresh",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "db:migrate": "bun run --filter @doors/server db:migrate",
+    "db:seed": "bun run --filter @doors/server db:seed"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.16"

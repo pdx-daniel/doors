@@ -48,8 +48,17 @@ bun run dev:mobile    # Metro bundler
 bun run dev:web       # Webpack dev server on :3001
 bun run ios             # iOS simulator
 bun run basemap:refresh # Local PMTiles basemap via Planetiler Docker (before custom tiles)
+bun run db:up           # Start PostGIS via Docker Compose
+bun run db:migrate      # Apply SQL migrations
+bun run db:seed         # Load Portland dev people/locations
 bun run check           # format + lint + safe fixes
 bun run check:unsafe  # same, plus unsafe fixes (e.g. node: protocol)
 bun run ci            # read-only Biome check (CI)
 bun run typecheck     # TypeScript across workspaces
 ```
+
+## Database (local dev)
+
+1. Copy `.env.example` to `.env` and run `bun run db:up`.
+2. Run `bun run db:migrate` then `bun run db:seed`.
+3. API routes under `/v1/*` require the `X-Workspace-Id` header. The seeded org workspace id is exported as `DEV_WORKSPACE_ID` from `@doors/api` (also set automatically on the Eden client).

@@ -15,6 +15,11 @@ module.exports = {
   },
   resolve: {
     mainFields: ['browser', 'module', 'main'],
+    modules: [
+      path.join(appRoot, 'node_modules'),
+      path.join(monorepoRoot, 'node_modules'),
+      'node_modules',
+    ],
     alias: {
       'react-native$': 'react-native-web',
       '@': path.join(appRoot, 'src'),

@@ -6,7 +6,7 @@ import {StyleSheet, View} from 'react-native'
  * The map itself lives in AppShell and stays mounted underneath.
  */
 export function MapScreen(): ReactElement {
-  return <View style={styles.container} pointerEvents="box-none" />
+  return <View style={styles.container} pointerEvents="none" />
 }
 
 /** Full-screen pass-through so map interactions work unobstructed. */

@@ -1,6 +1,8 @@
 import type {App} from '@doors/server'
 import {treaty} from '@elysiajs/eden'
 
+import {DEV_WORKSPACE_ID, WORKSPACE_ID_HEADER} from './constants'
+
 /** Default API origin for local development. */
 const defaultBaseUrl = 'http://localhost:3000'
 
@@ -9,7 +11,11 @@ const defaultBaseUrl = 'http://localhost:3000'
  * @param baseUrl - API origin (no trailing slash).
  */
 export function createApiClient(baseUrl: string = defaultBaseUrl): ReturnType<typeof treaty<App>> {
-  return treaty<App>(baseUrl)
+  return treaty<App>(baseUrl, {
+    headers: {
+      [WORKSPACE_ID_HEADER]: DEV_WORKSPACE_ID,
+    },
+  })
 }
 
 // Resolve the API base URL from the environment when available.
