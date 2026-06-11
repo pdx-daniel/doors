@@ -1,10 +1,6 @@
-import {Camera, Map} from '@maplibre/maplibre-react-native';
+import {Camera, Map as MapLibreMap} from '@maplibre/maplibre-react-native';
 import {StyleSheet, View} from 'react-native';
-import {
-  DEFAULT_CENTER,
-  DEFAULT_ZOOM,
-  LIBERTY_STYLE_URL,
-} from '../constants/map';
+import {DEFAULT_CENTER, DEFAULT_ZOOM, LIBERTY_STYLE_URL} from '../constants/map';
 
 /**
  * Native iOS/Android map renderer backed by @maplibre/maplibre-react-native v11.
@@ -12,14 +8,14 @@ import {
 export function MapView() {
   return (
     <View style={styles.container}>
-      <Map mapStyle={LIBERTY_STYLE_URL} style={styles.map}>
+      <MapLibreMap mapStyle={LIBERTY_STYLE_URL} style={styles.map}>
         <Camera
           initialViewState={{
             center: DEFAULT_CENTER,
             zoom: DEFAULT_ZOOM,
           }}
         />
-      </Map>
+      </MapLibreMap>
     </View>
   );
 }

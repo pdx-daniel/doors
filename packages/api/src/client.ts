@@ -1,5 +1,5 @@
-import {treaty} from '@elysiajs/eden';
 import type {App} from '@doors/server';
+import {treaty} from '@elysiajs/eden';
 
 /** Default API origin for local development. */
 const defaultBaseUrl = 'http://localhost:3000';

@@ -1,9 +1,8 @@
 import {useEffect, useState} from 'react';
 import {Platform, StatusBar, StyleSheet, Text, View} from 'react-native';
-import {useApiHealth} from './src/hooks/useApiHealth';
 import type {ApiHealthStatus} from './src/hooks/useApiHealth';
+import {useApiHealth} from './src/hooks/useApiHealth';
 import {MapScreen} from './src/screens/MapScreen';
-
 
 /**
  * Root application shell: optional API status banner plus full-screen map.
@@ -28,8 +27,7 @@ export default function App() {
     };
   }, [healthStatus]);
 
-  const showBanner =
-    bannerVisible && (healthStatus === 'checking' || healthStatus === 'offline');
+  const showBanner = bannerVisible && (healthStatus === 'checking' || healthStatus === 'offline');
 
   return (
     <View style={styles.container}>
@@ -40,9 +38,7 @@ export default function App() {
             styles.banner,
             healthStatus === 'offline' ? styles.bannerOffline : styles.bannerChecking,
           ]}>
-          <Text style={styles.bannerText}>
-            API: {formatHealthStatus(healthStatus)}
-          </Text>
+          <Text style={styles.bannerText}>API: {formatHealthStatus(healthStatus)}</Text>
         </View>
       ) : null}
       <MapScreen />
@@ -71,7 +67,6 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' ? {minHeight: '100%'} : {}),
   },
 });
-
 
 /** Human-readable label for the dev health banner. */
 function formatHealthStatus(status: ApiHealthStatus): string {

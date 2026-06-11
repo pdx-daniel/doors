@@ -2,7 +2,10 @@
   "name": "doors",
   "private": true,
   "workspaces": {
-    "packages": ["apps/*", "packages/*"],
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
     "catalog": {
       "elysia": "1.4.18",
       "@elysiajs/cors": "1.4.0",
@@ -15,6 +18,13 @@
     "dev:web": "bun run --filter @doors/mobile web",
     "ios": "bun run --filter @doors/mobile ios",
     "android": "bun run --filter @doors/mobile android",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check --write .",
+    "ci": "biome ci .",
     "typecheck": "bun run --filter '*' typecheck"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.16"
   }
 }

@@ -2,11 +2,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import {useEffect, useRef} from 'react';
 import {StyleSheet, View} from 'react-native';
-import {
-  DEFAULT_CENTER,
-  DEFAULT_ZOOM,
-  LIBERTY_STYLE_URL,
-} from '../constants/map';
+import {DEFAULT_CENTER, DEFAULT_ZOOM, LIBERTY_STYLE_URL} from '../constants/map';
 
 /**
  * Web map renderer backed by maplibre-gl v5.
