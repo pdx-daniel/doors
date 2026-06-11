@@ -4,6 +4,7 @@ import {Platform, StatusBar, StyleSheet, Text, View} from 'react-native'
 
 import type {ApiHealthStatus} from './src/hooks/useApiHealth'
 import {useApiHealth} from './src/hooks/useApiHealth'
+import {useMapAppearance} from './src/hooks/useMapAppearance'
 import {MapScreen} from './src/screens/MapScreen'
 
 /**
@@ -12,6 +13,7 @@ import {MapScreen} from './src/screens/MapScreen'
  */
 export default function App(): ReactElement {
   const healthStatus = useApiHealth()
+  const appearance = useMapAppearance()
   const [bannerVisible, setBannerVisible] = useState(true)
 
   useEffect(() => {
@@ -33,7 +35,7 @@ export default function App(): ReactElement {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={appearance === 'dark' ? 'light-content' : 'dark-content'} />
       {showBanner ? (
         <View
           style={[

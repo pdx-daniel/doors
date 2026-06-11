@@ -8,19 +8,25 @@ import {
   DEFAULT_CENTER,
   DEFAULT_ZOOM,
   getBasemapPmtilesUrl,
-  LIBERTY_STYLE_URL,
+  getRemoteFallbackStyleUrl,
 } from '../constants/map'
+import {useMapAppearance} from '../hooks/useMapAppearance'
 import {buildBasemapStyle} from '../lib/basemapStyle'
 import {registerPmtilesProtocol} from '../lib/registerPmtilesProtocol'
 
 /**
  * Web map renderer backed by maplibre-gl v5.
- * Loads local PMTiles when available and falls back to OpenFreeMap Liberty on failure.
+ * Loads local PMTiles when available and falls back to OpenFreeMap on failure.
  */
 export function MapView(): ReactElement {
+  const appearance = useMapAppearance()
+  const appearanceRef = useRef(appearance)
   const hostRef = useRef<View>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const fallbackUsedRef = useRef(false)
+
+  // Keep the error handler aligned with the latest system appearance.
+  appearanceRef.current = appearance
 
   useEffect(() => {
     // RN-web exposes the underlying DOM element through the View ref.
@@ -33,7 +39,7 @@ export function MapView(): ReactElement {
     registerPmtilesProtocol()
 
     // Build a local style that points at the dev-server PMTiles archive.
-    const basemapStyle = buildBasemapStyle(getBasemapPmtilesUrl())
+    const basemapStyle = buildBasemapStyle(getBasemapPmtilesUrl(), appearanceRef.current)
 
     // Create the MapLibre instance against the host DOM node.
     const map = new maplibregl.Map({
@@ -45,14 +51,14 @@ export function MapView(): ReactElement {
 
     mapRef.current = map
 
-    // Fall back to the remote Liberty style when local tiles or style assets fail.
+    // Fall back to the remote OpenFreeMap style when local tiles or style assets fail.
     map.on('error', () => {
       if (fallbackUsedRef.current) {
         return
       }
 
       fallbackUsedRef.current = true
-      map.setStyle(LIBERTY_STYLE_URL)
+      map.setStyle(getRemoteFallbackStyleUrl(appearanceRef.current))
     })
 
     // Resize once tiles load in case layout settled after first paint.
@@ -65,6 +71,19 @@ export function MapView(): ReactElement {
       mapRef.current = null
     }
   }, [])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) {
+      return
+    }
+
+    // Swap between light and dark palettes when the system appearance changes.
+    const nextStyle = fallbackUsedRef.current
+      ? getRemoteFallbackStyleUrl(appearance)
+      : buildBasemapStyle(getBasemapPmtilesUrl(), appearance)
+    map.setStyle(nextStyle)
+  }, [appearance])
 
   return <View ref={hostRef} style={styles.map} />
 }

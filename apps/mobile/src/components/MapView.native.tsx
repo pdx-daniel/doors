@@ -1,15 +1,16 @@
 import {Camera, Map as MaplibreMap} from '@maplibre/maplibre-react-native'
 import type {StyleSpecification} from 'maplibre-gl'
 import type {ReactElement} from 'react'
-import {useCallback, useState} from 'react'
+import {useCallback, useMemo, useState} from 'react'
 import {StyleSheet, View} from 'react-native'
 
 import {
   DEFAULT_CENTER,
   DEFAULT_ZOOM,
   getBasemapPmtilesUrl,
-  LIBERTY_STYLE_URL,
+  getRemoteFallbackStyleUrl,
 } from '../constants/map'
+import {useMapAppearance} from '../hooks/useMapAppearance'
 import {buildBasemapStyle} from '../lib/basemapStyle'
 
 /**
@@ -17,19 +18,24 @@ import {buildBasemapStyle} from '../lib/basemapStyle'
  * Uses built-in pmtiles:// support in phase 1 (simulator dev server) with OpenFreeMap fallback.
  */
 export function MapView(): ReactElement {
-  const [mapStyle, setMapStyle] = useState<string | StyleSpecification>(() =>
-    buildBasemapStyle(getBasemapPmtilesUrl()),
-  )
+  const appearance = useMapAppearance()
   const [fallbackUsed, setFallbackUsed] = useState(false)
 
+  const mapStyle = useMemo((): string | StyleSpecification => {
+    if (fallbackUsed) {
+      return getRemoteFallbackStyleUrl(appearance)
+    }
+
+    return buildBasemapStyle(getBasemapPmtilesUrl(), appearance)
+  }, [appearance, fallbackUsed])
+
   const handleMapLoadFailure = useCallback((): void => {
-    // Swap to the remote Liberty style once when local PMTiles are unreachable.
+    // Swap to the remote OpenFreeMap style once when local PMTiles are unreachable.
     if (fallbackUsed) {
       return
     }
 
     setFallbackUsed(true)
-    setMapStyle(LIBERTY_STYLE_URL)
   }, [fallbackUsed])
 
   return (
