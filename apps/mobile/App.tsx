@@ -1,11 +1,12 @@
 import type {ReactElement} from 'react'
 import {useEffect, useState} from 'react'
 import {StatusBar} from 'react-native'
+import {SafeAreaProvider} from 'react-native-safe-area-context'
 
 import type {ApiHealthStatus} from './src/hooks/useApiHealth'
 import {useApiHealth} from './src/hooks/useApiHealth'
 import {useMapAppearance} from './src/hooks/useMapAppearance'
-import {MapScreen} from './src/screens/MapScreen'
+import {AppShell} from '@/components/AppShell'
 import {Box} from '@/components/ui/box'
 import {GluestackUIProvider} from '@/components/ui/gluestack-ui-provider'
 import {Text} from '@/components/ui/text'
@@ -13,7 +14,7 @@ import {Text} from '@/components/ui/text'
 import './global.css'
 
 /**
- * Root application shell: optional API status banner plus full-screen map.
+ * Root application shell: optional API status banner plus map shell with navigation.
  * Renders the map even when the backend is unreachable.
  */
 export default function App(): ReactElement {
@@ -40,18 +41,20 @@ export default function App(): ReactElement {
 
   return (
     <GluestackUIProvider mode="light">
-      <Box className="flex-1 web:min-h-full">
-        <StatusBar barStyle={appearance === 'dark' ? 'light-content' : 'dark-content'} />
-        {showBanner ? (
-          <Box
-            className={`px-3 py-1.5 ${healthStatus === 'offline' ? 'bg-red-900' : 'bg-gray-900'}`}>
-            <Text className="text-xs font-semibold text-gray-50">
-              API: {formatHealthStatus(healthStatus)}
-            </Text>
-          </Box>
-        ) : null}
-        <MapScreen />
-      </Box>
+      <SafeAreaProvider>
+        <Box className="flex-1 web:min-h-full">
+          <StatusBar barStyle={appearance === 'dark' ? 'light-content' : 'dark-content'} />
+          {showBanner ? (
+            <Box
+              className={`px-3 py-1.5 ${healthStatus === 'offline' ? 'bg-red-900' : 'bg-gray-900'}`}>
+              <Text className="text-xs font-semibold text-gray-50">
+                API: {formatHealthStatus(healthStatus)}
+              </Text>
+            </Box>
+          ) : null}
+          <AppShell />
+        </Box>
+      </SafeAreaProvider>
     </GluestackUIProvider>
   )
 }

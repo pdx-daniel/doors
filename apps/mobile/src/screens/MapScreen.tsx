@@ -1,70 +1,18 @@
 import type {ReactElement} from 'react'
-import {StyleSheet, Text, View} from 'react-native'
-
-import {MapView} from '../components/MapView'
-import {MAP_ATTRIBUTION} from '../constants/map'
-import {useMapAppearance} from '../hooks/useMapAppearance'
+import {StyleSheet, View} from 'react-native'
 
 /**
- * Full-screen screen that hosts the platform-specific map component.
- * Shows required OpenMapTiles / OSM attribution over the map.
+ * Transparent route shown when the Map tab is active.
+ * The map itself lives in AppShell and stays mounted underneath.
  */
 export function MapScreen(): ReactElement {
-  const appearance = useMapAppearance()
-  const isDark = appearance === 'dark'
-
-  return (
-    <View style={styles.container}>
-      <MapView />
-      <View
-        style={[
-          styles.attribution,
-          isDark ? styles.attributionDark : styles.attributionLight,
-          styles.attributionOverlay,
-        ]}>
-        <Text
-          style={[
-            styles.attributionText,
-            isDark ? styles.attributionTextDark : styles.attributionTextLight,
-          ]}>
-          {MAP_ATTRIBUTION}
-        </Text>
-      </View>
-    </View>
-  )
+  return <View style={styles.container} pointerEvents="box-none" />
 }
 
-/** Fills remaining space below the optional status banner. */
+/** Full-screen pass-through so map interactions work unobstructed. */
 const styles = StyleSheet.create({
-  attribution: {
-    bottom: 8,
-    left: 8,
-    maxWidth: '80%',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    position: 'absolute',
-  },
-  attributionOverlay: {
-    pointerEvents: 'none',
-  },
-  attributionDark: {
-    backgroundColor: 'rgba(17, 24, 39, 0.85)',
-  },
-  attributionLight: {
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-  },
-  attributionText: {
-    fontSize: 10,
-    lineHeight: 14,
-  },
-  attributionTextDark: {
-    color: '#e5e7eb',
-  },
-  attributionTextLight: {
-    color: '#374151',
-  },
   container: {
+    backgroundColor: 'transparent',
     flex: 1,
-    minHeight: 0,
   },
 })

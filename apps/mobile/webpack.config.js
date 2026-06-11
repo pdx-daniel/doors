@@ -14,6 +14,7 @@ module.exports = {
     filename: 'bundle.js',
   },
   resolve: {
+    mainFields: ['browser', 'module', 'main'],
     alias: {
       'react-native$': 'react-native-web',
       '@': path.join(appRoot, 'src'),
@@ -30,6 +31,13 @@ module.exports = {
   module: {
     rules: [
       {
+        // React Navigation ships extensionless ESM imports that webpack 5 rejects by default.
+        test: /\.m?js$/,
+        resolve: {
+          fullySpecified: false,
+        },
+      },
+      {
         test: /\.(js|jsx|ts|tsx)$/,
         include: [
           appRoot,
@@ -43,6 +51,10 @@ module.exports = {
             envName: 'web',
           },
         },
+      },
+      {
+        test: /\.(png|jpe?g|gif|svg)$/i,
+        type: 'asset/resource',
       },
       {
         test: /\.css$/,
