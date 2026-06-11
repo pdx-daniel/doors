@@ -17,8 +17,11 @@ export function MapScreen(): ReactElement {
     <View style={styles.container}>
       <MapView />
       <View
-        pointerEvents="none"
-        style={[styles.attribution, isDark ? styles.attributionDark : styles.attributionLight]}>
+        style={[
+          styles.attribution,
+          isDark ? styles.attributionDark : styles.attributionLight,
+          styles.attributionOverlay,
+        ]}>
         <Text
           style={[
             styles.attributionText,
@@ -40,6 +43,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     position: 'absolute',
+  },
+  attributionOverlay: {
+    pointerEvents: 'none',
   },
   attributionDark: {
     backgroundColor: 'rgba(17, 24, 39, 0.85)',

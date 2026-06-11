@@ -16,6 +16,7 @@ module.exports = {
   resolve: {
     alias: {
       'react-native$': 'react-native-web',
+      '@': path.join(appRoot, 'src'),
       '@doors/api': path.join(monorepoRoot, 'packages/api/src/index.ts'),
       '@doors/server': path.join(monorepoRoot, 'apps/server/src/app.ts'),
       // Prefer the web map implementation when bundling for the browser.
@@ -24,13 +25,18 @@ module.exports = {
         'src/components/MapView.web.tsx',
       ),
     },
-    extensions: ['.web.tsx', '.web.ts', '.web.js', '.tsx', '.ts', '.js', '.json'],
+    extensions: ['.web.tsx', '.web.ts', '.web.js', '.tsx', '.ts', '.jsx', '.js', '.json'],
   },
   module: {
     rules: [
       {
         test: /\.(js|jsx|ts|tsx)$/,
-        exclude: /node_modules\/(?!(@doors)\/).*/,
+        include: [
+          appRoot,
+          path.resolve(monorepoRoot, 'packages/api'),
+          /node_modules[/\\](@doors|nativewind|react-native-css|@gluestack-ui)/,
+          /node_modules[/\\]\.bun[/\\]@gluestack-ui[^/\\]+[/\\]node_modules[/\\]@gluestack-ui/,
+        ],
         use: {
           loader: 'babel-loader',
           options: {
@@ -40,7 +46,7 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader'],
+        use: ['style-loader', 'css-loader', 'postcss-loader'],
       },
     ],
   },

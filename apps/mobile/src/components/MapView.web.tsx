@@ -74,7 +74,7 @@ export function MapView(): ReactElement {
 
   useEffect(() => {
     const map = mapRef.current
-    if (!map) {
+    if (!map?.isStyleLoaded()) {
       return
     }
 

@@ -13,7 +13,8 @@
       "*.json",
       "AGENTS.md",
       "!apps/mobile/ios",
-      "!apps/mobile/android"
+      "!apps/mobile/android",
+      "!apps/mobile/global.css"
     ]
   },
   "formatter": {
@@ -44,6 +45,9 @@
     }
   },
   "css": {
+    "parser": {
+      "tailwindDirectives": true
+    },
     "formatter": {
       "enabled": true
     }
@@ -155,6 +159,41 @@
             "noDefaultExport": "off"
           }
         }
+      }
+    },
+    {
+      "includes": [
+        "apps/mobile/global.css",
+        "apps/mobile/postcss.config.mjs",
+        "apps/mobile/react-native-css-env.d.ts",
+        "apps/mobile/nativewind-env.d.ts",
+        "apps/mobile/metro.config.js",
+        "apps/mobile/src/components/ui/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noDefaultExport": "off",
+            "useFilenamingConvention": "off",
+            "useNamingConvention": "off",
+            "useBlockStatements": "off"
+          },
+          "nursery": {
+            "useExplicitReturnType": "off"
+          },
+          "security": {
+            "noDangerouslySetInnerHtml": "off"
+          }
+        }
+      },
+      "formatter": {
+        "enabled": false
+      }
+    },
+    {
+      "includes": ["apps/mobile/global.css"],
+      "linter": {
+        "enabled": false
       }
     },
     {

@@ -1,11 +1,16 @@
 import type {ReactElement} from 'react'
 import {useEffect, useState} from 'react'
-import {Platform, StatusBar, StyleSheet, Text, View} from 'react-native'
+import {StatusBar} from 'react-native'
 
 import type {ApiHealthStatus} from './src/hooks/useApiHealth'
 import {useApiHealth} from './src/hooks/useApiHealth'
 import {useMapAppearance} from './src/hooks/useMapAppearance'
 import {MapScreen} from './src/screens/MapScreen'
+import {Box} from '@/components/ui/box'
+import {GluestackUIProvider} from '@/components/ui/gluestack-ui-provider'
+import {Text} from '@/components/ui/text'
+
+import './global.css'
 
 /**
  * Root application shell: optional API status banner plus full-screen map.
@@ -34,43 +39,22 @@ export default function App(): ReactElement {
   const showBanner = bannerVisible && (healthStatus === 'checking' || healthStatus === 'offline')
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle={appearance === 'dark' ? 'light-content' : 'dark-content'} />
-      {showBanner ? (
-        <View
-          style={[
-            styles.banner,
-            healthStatus === 'offline' ? styles.bannerOffline : styles.bannerChecking,
-          ]}>
-          <Text style={styles.bannerText}>API: {formatHealthStatus(healthStatus)}</Text>
-        </View>
-      ) : null}
-      <MapScreen />
-    </View>
+    <GluestackUIProvider mode="light">
+      <Box className="flex-1 web:min-h-full">
+        <StatusBar barStyle={appearance === 'dark' ? 'light-content' : 'dark-content'} />
+        {showBanner ? (
+          <Box
+            className={`px-3 py-1.5 ${healthStatus === 'offline' ? 'bg-red-900' : 'bg-gray-900'}`}>
+            <Text className="text-xs font-semibold text-gray-50">
+              API: {formatHealthStatus(healthStatus)}
+            </Text>
+          </Box>
+        ) : null}
+        <MapScreen />
+      </Box>
+    </GluestackUIProvider>
   )
 }
-
-const styles = StyleSheet.create({
-  banner: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  bannerChecking: {
-    backgroundColor: '#111827',
-  },
-  bannerOffline: {
-    backgroundColor: '#7f1d1d',
-  },
-  bannerText: {
-    color: '#f9fafb',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  container: {
-    flex: 1,
-    ...(Platform.OS === 'web' ? {minHeight: '100%'} : {}),
-  },
-})
 
 /** Human-readable label for the dev health banner. */
 function formatHealthStatus(status: ApiHealthStatus): string {

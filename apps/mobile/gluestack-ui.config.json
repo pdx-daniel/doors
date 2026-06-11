@@ -1,0 +1,14 @@
+{
+  "tailwind": {
+    "config": "",
+    "css": "global.css"
+  },
+  "app": {
+    "entry": "App.tsx"
+  },
+  "components": {
+    "path": "src/components/ui"
+  },
+  "projectType": "react-native-cli",
+  "style": "nativewind-v5"
+}
