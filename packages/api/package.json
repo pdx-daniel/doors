@@ -1,0 +1,19 @@
+{
+  "name": "@doors/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@elysiajs/eden": "catalog:"
+  },
+  "devDependencies": {
+    "elysia": "catalog:",
+    "typescript": "^5.8.3"
+  }
+}

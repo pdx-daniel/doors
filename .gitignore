@@ -1,0 +1,33 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+.DS_Store
+
+# Bun (legacy binary lockfile only)
+bun.lockb
+
+# TypeScript
+*.tsbuildinfo
+
+# React Native / Metro
+.metro-health-check*
+
+# iOS
+apps/mobile/ios/build/
+apps/mobile/ios/Pods/
+apps/mobile/ios/*.xcworkspace
+!apps/mobile/ios/*.xcworkspace/contents.xcworkspacedata
+apps/mobile/ios/DerivedData/
+
+# Android
+apps/mobile/android/build/
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/android/local.properties
+*.keystore
+!apps/mobile/android/app/debug.keystore
+
+# Webpack
+apps/mobile/web-dist/

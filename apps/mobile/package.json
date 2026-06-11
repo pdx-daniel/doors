@@ -1,0 +1,49 @@
+{
+  "name": "@doors/mobile",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start",
+    "web": "webpack serve --config webpack.config.js --mode development",
+    "build:web": "webpack --config webpack.config.js --mode production",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@doors/api": "workspace:*",
+    "@maplibre/maplibre-react-native": "^11.3.4",
+    "maplibre-gl": "^5.24.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.80.2",
+    "react-native-web": "^0.21.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@babel/preset-env": "^7.25.3",
+    "@babel/preset-react": "^7.26.3",
+    "@babel/preset-typescript": "^7.26.3",
+    "@babel/runtime": "^7.25.0",
+    "@react-native-community/cli": "19.0.0",
+    "@react-native-community/cli-platform-android": "19.0.0",
+    "@react-native-community/cli-platform-ios": "19.0.0",
+    "@react-native/babel-preset": "0.80.2",
+    "@react-native/metro-config": "0.80.2",
+    "@react-native/typescript-config": "0.80.2",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "babel-loader": "^9.2.1",
+    "babel-plugin-react-native-web": "^0.21.2",
+    "css-loader": "^7.1.2",
+    "html-webpack-plugin": "^5.6.3",
+    "style-loader": "^4.0.0",
+    "typescript": "^5.8.3",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

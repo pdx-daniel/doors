@@ -1,0 +1,88 @@
+import {useEffect, useState} from 'react';
+import {Platform, StatusBar, StyleSheet, Text, View} from 'react-native';
+import {useApiHealth} from './src/hooks/useApiHealth';
+import type {ApiHealthStatus} from './src/hooks/useApiHealth';
+import {MapScreen} from './src/screens/MapScreen';
+
+/** Human-readable label for the dev health banner. */
+function formatHealthStatus(status: ApiHealthStatus): string {
+  switch (status) {
+    case 'checking':
+      return 'checking…';
+    case 'ok':
+      return 'ok';
+    case 'offline':
+      return 'offline';
+    case 'unknown':
+      return 'unknown';
+  }
+}
+
+/**
+ * Root application shell: optional API status banner plus full-screen map.
+ * Renders the map even when the backend is unreachable.
+ */
+function App() {
+  const healthStatus = useApiHealth();
+  const [bannerVisible, setBannerVisible] = useState(true);
+
+  useEffect(() => {
+    // Hide the offline banner after a few seconds so it does not obscure the map.
+    if (healthStatus !== 'offline') {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setBannerVisible(false);
+    }, 4000);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [healthStatus]);
+
+  const showBanner =
+    bannerVisible && (healthStatus === 'checking' || healthStatus === 'offline');
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      {showBanner ? (
+        <View
+          style={[
+            styles.banner,
+            healthStatus === 'offline' ? styles.bannerOffline : styles.bannerChecking,
+          ]}>
+          <Text style={styles.bannerText}>
+            API: {formatHealthStatus(healthStatus)}
+          </Text>
+        </View>
+      ) : null}
+      <MapScreen />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  banner: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  bannerChecking: {
+    backgroundColor: '#111827',
+  },
+  bannerOffline: {
+    backgroundColor: '#7f1d1d',
+  },
+  bannerText: {
+    color: '#f9fafb',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  container: {
+    flex: 1,
+    ...(Platform.OS === 'web' ? {minHeight: '100%'} : {}),
+  },
+});
+
+export default App;
