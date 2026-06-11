@@ -1,9 +1,9 @@
-const path = require('node:path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const webpack = require('webpack');
+const path = require('node:path')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const webpack = require('webpack')
 
-const appRoot = __dirname;
-const monorepoRoot = path.resolve(appRoot, '../..');
+const appRoot = __dirname
+const monorepoRoot = path.resolve(appRoot, '../..')
 
 /** @type {import('webpack').Configuration} */
 module.exports = {
@@ -61,4 +61,4 @@ module.exports = {
     hot: true,
     historyApiFallback: true,
   },
-};
+}

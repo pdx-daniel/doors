@@ -1,4 +1,4 @@
-const path = require('node:path');
+const path = require('node:path')
 
 module.exports = {
   project: {
@@ -6,4 +6,4 @@ module.exports = {
     android: {},
   },
   watchFolders: [path.resolve(__dirname, '../..')],
-};
+}

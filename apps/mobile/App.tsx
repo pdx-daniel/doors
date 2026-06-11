@@ -1,33 +1,35 @@
-import {useEffect, useState} from 'react';
-import {Platform, StatusBar, StyleSheet, Text, View} from 'react-native';
-import type {ApiHealthStatus} from './src/hooks/useApiHealth';
-import {useApiHealth} from './src/hooks/useApiHealth';
-import {MapScreen} from './src/screens/MapScreen';
+import type {ReactElement} from 'react'
+import {useEffect, useState} from 'react'
+import {Platform, StatusBar, StyleSheet, Text, View} from 'react-native'
+
+import type {ApiHealthStatus} from './src/hooks/useApiHealth'
+import {useApiHealth} from './src/hooks/useApiHealth'
+import {MapScreen} from './src/screens/MapScreen'
 
 /**
  * Root application shell: optional API status banner plus full-screen map.
  * Renders the map even when the backend is unreachable.
  */
-export default function App() {
-  const healthStatus = useApiHealth();
-  const [bannerVisible, setBannerVisible] = useState(true);
+export default function App(): ReactElement {
+  const healthStatus = useApiHealth()
+  const [bannerVisible, setBannerVisible] = useState(true)
 
   useEffect(() => {
     // Hide the offline banner after a few seconds so it does not obscure the map.
     if (healthStatus !== 'offline') {
-      return;
+      return
     }
 
     const timeoutId = setTimeout(() => {
-      setBannerVisible(false);
-    }, 4000);
+      setBannerVisible(false)
+    }, 4000)
 
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [healthStatus]);
+    return (): void => {
+      clearTimeout(timeoutId)
+    }
+  }, [healthStatus])
 
-  const showBanner = bannerVisible && (healthStatus === 'checking' || healthStatus === 'offline');
+  const showBanner = bannerVisible && (healthStatus === 'checking' || healthStatus === 'offline')
 
   return (
     <View style={styles.container}>
@@ -43,7 +45,7 @@ export default function App() {
       ) : null}
       <MapScreen />
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -66,18 +68,18 @@ const styles = StyleSheet.create({
     flex: 1,
     ...(Platform.OS === 'web' ? {minHeight: '100%'} : {}),
   },
-});
+})
 
 /** Human-readable label for the dev health banner. */
 function formatHealthStatus(status: ApiHealthStatus): string {
   switch (status) {
     case 'checking':
-      return 'checking…';
+      return 'checking…'
     case 'ok':
-      return 'ok';
+      return 'ok'
     case 'offline':
-      return 'offline';
+      return 'offline'
     case 'unknown':
-      return 'unknown';
+      return 'unknown'
   }
 }

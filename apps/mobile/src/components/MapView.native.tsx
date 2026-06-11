@@ -1,11 +1,13 @@
-import {Camera, Map as MapLibreMap} from '@maplibre/maplibre-react-native';
-import {StyleSheet, View} from 'react-native';
-import {DEFAULT_CENTER, DEFAULT_ZOOM, LIBERTY_STYLE_URL} from '../constants/map';
+import {Camera, Map as MapLibreMap} from '@maplibre/maplibre-react-native'
+import type {ReactElement} from 'react'
+import {StyleSheet, View} from 'react-native'
+
+import {DEFAULT_CENTER, DEFAULT_ZOOM, LIBERTY_STYLE_URL} from '../constants/map'
 
 /**
  * Native iOS/Android map renderer backed by @maplibre/maplibre-react-native v11.
  */
-export function MapView() {
+export function MapView(): ReactElement {
   return (
     <View style={styles.container}>
       <MapLibreMap mapStyle={LIBERTY_STYLE_URL} style={styles.map}>
@@ -17,7 +19,7 @@ export function MapView() {
         />
       </MapLibreMap>
     </View>
-  );
+  )
 }
 
 /** Layout styles for a map that expands to fill its parent. */
@@ -28,4 +30,4 @@ const styles = StyleSheet.create({
   map: {
     flex: 1,
   },
-});
+})

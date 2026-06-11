@@ -21,6 +21,7 @@
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check --write .",
+    "check:unsafe": "biome check --write --unsafe .",
     "ci": "biome ci .",
     "typecheck": "bun run --filter '*' typecheck"
   },

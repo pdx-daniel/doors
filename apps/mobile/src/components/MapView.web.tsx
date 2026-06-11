@@ -1,22 +1,24 @@
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
-import {useEffect, useRef} from 'react';
-import {StyleSheet, View} from 'react-native';
-import {DEFAULT_CENTER, DEFAULT_ZOOM, LIBERTY_STYLE_URL} from '../constants/map';
+import maplibregl from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
+import type {ReactElement} from 'react'
+import {useEffect, useRef} from 'react'
+import {StyleSheet, View} from 'react-native'
+
+import {DEFAULT_CENTER, DEFAULT_ZOOM, LIBERTY_STYLE_URL} from '../constants/map'
 
 /**
  * Web map renderer backed by maplibre-gl v5.
  * Attaches MapLibre to the DOM node behind an RN-web `View` ref.
  */
-export function MapView() {
-  const hostRef = useRef<View>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null);
+export function MapView(): ReactElement {
+  const hostRef = useRef<View>(null)
+  const mapRef = useRef<maplibregl.Map | null>(null)
 
   useEffect(() => {
     // RN-web exposes the underlying DOM element through the View ref.
-    const hostElement = hostRef.current as unknown as HTMLDivElement | null;
+    const hostElement = hostRef.current as unknown as HTMLDivElement | null
     if (!hostElement || mapRef.current) {
-      return;
+      return
     }
 
     // Create the MapLibre instance against the host DOM node.
@@ -25,22 +27,22 @@ export function MapView() {
       style: LIBERTY_STYLE_URL,
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
-    });
+    })
 
-    mapRef.current = map;
+    mapRef.current = map
 
     // Resize once tiles load in case layout settled after first paint.
     map.once('load', () => {
-      map.resize();
-    });
+      map.resize()
+    })
 
-    return () => {
-      map.remove();
-      mapRef.current = null;
-    };
-  }, []);
+    return (): void => {
+      map.remove()
+      mapRef.current = null
+    }
+  }, [])
 
-  return <View ref={hostRef} style={styles.map} />;
+  return <View ref={hostRef} style={styles.map} />
 }
 
 /** Layout for a map that fills all space offered by its parent. */
@@ -50,4 +52,4 @@ const styles = StyleSheet.create({
     minHeight: 0,
     width: '100%',
   },
-});
+})

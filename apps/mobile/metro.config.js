@@ -1,8 +1,8 @@
-const path = require('node:path');
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+const path = require('node:path')
+const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config')
 
-const projectRoot = __dirname;
-const monorepoRoot = path.resolve(projectRoot, '../..');
+const projectRoot = __dirname
+const monorepoRoot = path.resolve(projectRoot, '../..')
 
 /**
  * @type {import('@react-native/metro-config').MetroConfig}
@@ -16,6 +16,6 @@ const config = {
     ],
     disableHierarchicalLookup: true,
   },
-};
+}
 
-module.exports = mergeConfig(getDefaultConfig(projectRoot), config);
+module.exports = mergeConfig(getDefaultConfig(projectRoot), config)
