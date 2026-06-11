@@ -1,4 +1,4 @@
-import type {GeoJsonFeatureCollection, MapViewport} from '@doors/api/schemas'
+import type {GeoJsonFeatureCollection, MapViewport} from '@doors/api/geo/mapPeople'
 import type {StyleSpecification} from 'maplibre-gl'
 import {useCallback, useMemo, useState} from 'react'
 

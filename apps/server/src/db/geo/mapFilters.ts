@@ -1,4 +1,4 @@
-import type {Bbox, RadiusFilter} from '@doors/api/schemas'
+import type {Bbox, RadiusFilter} from '@doors/api/geo/bbox'
 import type postgres from 'postgres'
 
 import type {SqlClient} from '../client'

@@ -102,7 +102,7 @@ The initial migration (`001_init.sql`) enables the PostGIS extension and creates
 - `workspaces` — tenant containers for people and location data
 - `locations` — spatial points of interest (with a `geometry(Geometry, 4326)` column and a GIST index)
 - `people` — individuals linked to a location (with a `JSONB` metadata column)
-- `person_aliases` — external identity mappings scoped to a workspace
+- `person_links` — external identity mappings scoped to a workspace
 
 The script creates a `search_vector` column on `locations` and `people` using `tsvector` for full-text search.
 
@@ -118,7 +118,7 @@ This runs `apps/server/scripts/seed.ts`, which:
 2. Creates the development workspace (`id: 01900000-0000-7000-8000-000000000001`, name: "Doors Dev").
 3. Inserts 20 Portland-area venues as locations (offices, cafes, community centers, parks, etc.).
 4. Creates approximately 62 people distributed across those venues, with some people getting their own nearby micro-locations offset from the venue pin.
-5. Attaches external aliases to the first few people.
+5. Attaches external links to the first few people.
 
 The output looks like:
 

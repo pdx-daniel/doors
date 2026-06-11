@@ -1,4 +1,4 @@
-import type {GeoJsonFeatureCollection, MapPeopleFeature} from '@doors/api/schemas'
+import type {GeoJsonFeatureCollection, MapPeopleFeature} from '@doors/api/geo/mapPeople'
 
 import type {MapBucketRow} from '../db/geo/mapFilters'
 

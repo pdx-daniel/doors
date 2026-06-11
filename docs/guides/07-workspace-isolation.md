@@ -375,7 +375,7 @@ CREATE TABLE people (
   ...
 );
 
-CREATE TABLE person_aliases (
+CREATE TABLE person_links (
   id UUID PRIMARY KEY,
   workspace_id UUID NOT NULL REFERENCES workspaces (id) ON DELETE CASCADE,
   ...
@@ -384,7 +384,7 @@ CREATE TABLE person_aliases (
 ```
 
 Note the `ON DELETE CASCADE` — deleting a workspace removes all its child rows. The
-`person_aliases` unique constraint is scoped **within** a workspace: the same `(source, external_id)`
+`person_links` unique constraint is scoped **within** a workspace: the same `(source, external_id)`
 can exist in different workspaces without conflict.
 
 ### Indexes
@@ -394,7 +394,7 @@ Each tenant table has a B-tree index on `workspace_id` for efficient filtering:
 ```sql
 CREATE INDEX IF NOT EXISTS idx_locations_workspace_id ON locations (workspace_id);
 CREATE INDEX IF NOT EXISTS idx_people_workspace_id ON people (workspace_id);
-CREATE INDEX IF NOT EXISTS idx_person_aliases_workspace_id ON person_aliases (workspace_id);
+CREATE INDEX IF NOT EXISTS idx_person_links_workspace_id ON person_links (workspace_id);
 ```
 
 ### Seed data
@@ -406,7 +406,7 @@ workspace first so it is always deterministic.
 ```
 workspaces  ──1:N──>  locations
 workspaces  ──1:N──>  people
-workspaces  ──1:N──>  person_aliases
+workspaces  ──1:N──>  person_links
 ```
 
 ---

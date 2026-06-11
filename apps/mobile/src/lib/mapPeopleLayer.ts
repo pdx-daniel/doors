@@ -1,4 +1,4 @@
-import type {GeoJsonFeatureCollection} from '@doors/api/schemas'
+import type {GeoJsonFeatureCollection} from '@doors/api/geo/mapPeople'
 import type {
   CircleLayerSpecification,
   FilterSpecification,

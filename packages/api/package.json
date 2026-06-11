@@ -6,17 +6,29 @@
   "exports": {
     ".": "./src/index.ts",
     "./constants": "./src/constants.ts",
-    "./schemas": "./src/schemas.ts"
+    "./geo/bbox": "./src/geo/bbox.ts",
+    "./geo/geoJson": "./src/geo/geoJson.ts",
+    "./geo/mapPeople": "./src/geo/mapPeople.ts",
+    "./entities/workspace": "./src/entities/workspace.ts",
+    "./entities/location": "./src/entities/location.ts",
+    "./entities/person": "./src/entities/person.ts",
+    "./entities/personLink": "./src/entities/personLink.ts",
+    "./validators/location": "./src/validators/location.ts",
+    "./validators/person": "./src/validators/person.ts",
+    "./validators/mapQuery": "./src/validators/mapQuery.ts",
+    "./validators/mapPeople": "./src/validators/mapPeople.ts",
+    "./validators/stats": "./src/validators/stats.ts",
+    "./stats/histogram": "./src/stats/histogram.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@elysiajs/eden": "catalog:"
+    "@elysiajs/eden": "catalog:",
+    "elysia": "catalog:"
   },
   "devDependencies": {
     "@doors/server": "workspace:*",
-    "elysia": "catalog:",
     "typescript": "^5.8.3"
   }
 }

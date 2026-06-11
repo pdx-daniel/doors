@@ -145,7 +145,7 @@ bun run db:seed
 - **One org workspace** with id `01900000-0000-7000-8000-000000000001` (exported as `DEV_WORKSPACE_ID` from `@doors/api/constants`).
 - **20 venue locations** around Portland (offices, community centers, retail spaces, etc.).
 - **~70 people** distributed across the venues, each with name, email, phone, metadata (age, gender, occupation), and a location pin.
-- **External aliases** for the first 5 people.
+- **External links** for the first 5 people.
 
 ### Seeded workspace id
 
@@ -168,7 +168,7 @@ To clear all dev data and reseed:
 bun run db:reseed
 ```
 
-This runs the same seed script, which first deletes all rows associated with `DEV_WORKSPACE_ID` in dependency order (aliases, people, locations, workspaces) before re-inserting.
+This runs the same seed script, which first deletes all rows associated with `DEV_WORKSPACE_ID` in dependency order (links, people, locations, workspaces) before re-inserting.
 
 ---
 
@@ -200,7 +200,7 @@ SELECT id, kind, name FROM workspaces;
 -- Count seeded data
 SELECT count(*) FROM locations;
 SELECT count(*) FROM people;
-SELECT count(*) FROM person_aliases;
+SELECT count(*) FROM person_links;
 
 -- Inspect PostGIS version
 SELECT postgis_full_version();
@@ -499,9 +499,15 @@ export async function deleteNote(
 }
 ```
 
-### Step 2: Export from a barrel file if desired
+### Step 2: Add domain types in `@doors/api`
 
-If the repository is used outside the server package, add an export to the API package's barrel file.
+Define the row and input types in `packages/api/src/entities/note.ts` (resource schema + `CreateNoteInput` / `UpdateNoteInput`). Import those types in the repo instead of defining them locally:
+
+```ts
+import type {CreateNoteInput, NoteRow, UpdateNoteInput} from '@doors/api/entities/note'
+```
+
+If the entity is exposed via HTTP, add matching validators in `packages/api/src/validators/note.ts` and register both subpaths in `packages/api/package.json`. See [API routes guide §8](./03-api-routes.md#8-adding-shared-domain-types).
 
 ### Repository conventions
 
@@ -509,7 +515,7 @@ If the repository is used outside the server package, add an export to the API p
 |---|---|
 | **File name** | Lowercase, matches table name: `noteRepo.ts`, `personRepo.ts` |
 | **First parameter** | Always `sql: SqlClient` — the postgres.js client from `../client` |
-| **Type exports** | `Row` type for query results, `CreateInput` / `UpdateInput` for writes |
+| **Type exports** | Define `Row` / `CreateInput` / `UpdateInput` in `@doors/api/entities/<table>`; repos import from there |
 | **Column aliasing** | Use `AS "camelCase"` in SQL to map `snake_case` DB columns to `camelCase` TypeScript |
 | **Workspace scoping** | Every query filters by `workspace_id` |
 | **ID generation** | Call `newId()` from `../../lib/id` when no explicit id is provided |

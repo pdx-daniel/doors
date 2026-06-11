@@ -1,28 +1,18 @@
-import type {Bbox, GeoJsonGeometry, LocationResource} from '@doors/api/schemas'
+import type {
+  CreateLocationInput,
+  LocationRow,
+  UpdateLocationInput,
+} from '@doors/api/entities/location'
+import type {Bbox} from '@doors/api/geo/bbox'
 
 import {newId} from '../../lib/id'
 import type {SqlClient} from '../client'
 
-/** Location row returned from the database. */
-export type LocationRow = LocationResource
-
-/** Input for creating a location. */
-export type CreateLocationInput = {
-  id?: string
-  workspaceId: string
-  name: string
-  address?: string
-  locationType?: string
-  geometry: GeoJsonGeometry
-}
-
-/** Input for updating a location. */
-export type UpdateLocationInput = {
-  name?: string
-  address?: string
-  locationType?: string
-  geometry?: GeoJsonGeometry
-}
+export type {
+  CreateLocationInput,
+  LocationRow,
+  UpdateLocationInput,
+} from '@doors/api/entities/location'
 
 const locationColumns = `
   l.id,

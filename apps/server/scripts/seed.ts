@@ -3,7 +3,7 @@ import {uuidv7} from 'uuidv7'
 
 import {closeSql, getSql} from '../src/db/client'
 import {createLocation} from '../src/db/repos/locationRepo'
-import {createPerson, createPersonAlias} from '../src/db/repos/personRepo'
+import {createPerson, createPersonLink} from '../src/db/repos/personRepo'
 import {createWorkspace} from '../src/db/repos/workspaceRepo'
 
 /** Portland-area venues used as anchors for seeded people. */
@@ -233,7 +233,7 @@ function offsetCoordinates(venue: Venue, personIndex: number): {lng: number; lat
  * Clears previously seeded dev workspace rows so reseeds stay repeatable.
  */
 async function clearDevData(sql: ReturnType<typeof getSql>): Promise<void> {
-  await sql`DELETE FROM person_aliases WHERE workspace_id = ${DEV_WORKSPACE_ID}`
+  await sql`DELETE FROM person_links WHERE workspace_id = ${DEV_WORKSPACE_ID}`
   await sql`DELETE FROM people WHERE workspace_id = ${DEV_WORKSPACE_ID}`
   await sql`DELETE FROM locations WHERE workspace_id = ${DEV_WORKSPACE_ID}`
   await sql`DELETE FROM workspaces WHERE id = ${DEV_WORKSPACE_ID}`
@@ -327,9 +327,9 @@ async function seed(): Promise<void> {
         },
       })
 
-      // Attach a sample external alias for the first few seeded people.
+      // Attach a sample external link for the first few seeded people.
       if (personIndex <= 5) {
-        await createPersonAlias(sql, {
+        await createPersonLink(sql, {
           id: uuidv7(),
           workspaceId: DEV_WORKSPACE_ID,
           personId: person.id,

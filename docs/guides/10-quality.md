@@ -187,13 +187,13 @@ TypeScript with `verbatimModuleSyntax` requires explicit `type` qualifiers for t
 
 ```typescript
 // Correct — type-only import
-import type { Location } from '@doors/api';
+import type {LocationResource} from '@doors/api';
 
 // Correct — mixed import
-import { fetchLocations, type Location } from '@doors/api';
+import {api, type LocationResource} from '@doors/api';
 
 // Wrong — Biome will error
-import { Location } from '@doors/api';
+import {LocationResource} from '@doors/api';
 ```
 
 ### 4.4 Non-null assertion (warn only)
@@ -324,7 +324,7 @@ Files inside `apps/mobile/**` must not import from `@doors/server` directly. The
 
 ```typescript
 // Correct
-import { api, type Person } from '@doors/api';
+import {api, type PersonResource} from '@doors/api';
 
 // Wrong — Biome will error
 import { app } from '@doors/server';
@@ -530,19 +530,19 @@ If you only edit markdown files or other non-TypeScript/non-JavaScript files, th
 
 ```typescript
 // Causes error
-import { Location } from '@doors/api';
+import {LocationResource} from '@doors/api';
 ```
 
 **Fix:** Add `type` to the import.
 
 ```typescript
-import type { Location } from '@doors/api';
+import type {LocationResource} from '@doors/api';
 ```
 
 Or use mixed import syntax when combining values and types:
 
 ```typescript
-import { api, type Location, type Person } from '@doors/api';
+import {api, type LocationResource, type PersonResource} from '@doors/api';
 ```
 
 **Auto-fix:** `bun run check` fixes these automatically.

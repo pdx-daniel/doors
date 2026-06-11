@@ -1,18 +1,7 @@
-import type {Bbox, RadiusFilter} from '@doors/api/schemas'
+import type {Bbox, RadiusFilter} from '@doors/api/geo/bbox'
+import type {MapFilterQuery} from '@doors/api/validators/mapQuery'
 
 import type {MapPeopleFilters} from '../db/geo/mapFilters'
-
-/** Parsed map/stats query params shared by map and stats routes. */
-export type MapQueryParams = {
-  bbox?: string
-  radius?: string
-  polygon?: string
-  zoom?: number
-  q?: string
-  filter?: string
-  jsonpath?: string
-  cluster?: string
-}
 
 /**
  * Parses comma-separated bbox query param into numeric bounds.
@@ -94,7 +83,7 @@ export function parseLocationTypeFilter(raw: string | undefined): string | undef
  */
 export function buildMapPeopleFilters(
   workspaceId: string,
-  query: MapQueryParams,
+  query: MapFilterQuery,
 ): MapPeopleFilters {
   return {
     workspaceId,

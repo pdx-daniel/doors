@@ -1,4 +1,4 @@
-import type {MapClusterProperties, MapPersonProperties} from '@doors/api/schemas'
+import type {MapClusterProperties, MapPersonProperties} from '@doors/api/geo/mapPeople'
 
 /** Logs person, stack, or cluster metadata when a map dot is pressed. */
 export function logMapPersonFeature(properties: unknown): void {

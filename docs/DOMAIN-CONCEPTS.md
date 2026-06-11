@@ -23,10 +23,10 @@ CREATE TABLE workspaces (
 ### TypeScript
 
 ```ts
-// apps/server/src/db/repos/workspaceRepo.ts
+// packages/api/src/entities/workspace.ts
 type WorkspaceKind = 'personal' | 'org'
 
-type WorkspaceRow = {
+type Workspace = {
   id: string
   kind: WorkspaceKind
   name: string
@@ -34,7 +34,7 @@ type WorkspaceRow = {
 }
 ```
 
-No `WorkspaceResource` is exported to `@doors/api/schemas` — workspaces are internal infrastructure, not exposed via CRUD routes.
+Workspaces are internal infrastructure (no CRUD routes today) but types live in `@doors/api/entities/workspace` alongside the other canonical entities.
 
 ### API routes
 
@@ -51,8 +51,8 @@ This id is exported as `DEV_WORKSPACE_ID` from `@doors/api/constants` and is the
 | What | Where |
 |------|-------|
 | SQL DDL | `apps/server/migrations/001_init.sql` — `CREATE TABLE workspaces` |
-| TypeScript type | `apps/server/src/db/repos/workspaceRepo.ts` — `WorkspaceRow`, `WorkspaceKind`, `CreateWorkspaceInput` |
-| Repository | `apps/server/src/db/repos/workspaceRepo.ts` — `createWorkspace()` |
+| TypeScript type | `packages/api/src/entities/workspace.ts` — `Workspace`, `WorkspaceKind`, `CreateWorkspaceInput` |
+| Repository | `apps/server/src/db/repos/workspaceRepo.ts` — `createWorkspace()` (re-exports entity types) |
 | Header plumbing | `apps/server/src/middleware/workspace.ts` — `readWorkspaceId()`, `missingWorkspaceResponse()` |
 | Elysia plugin | `apps/server/src/middleware/workspacePlugin.ts` — derives `workspaceId`, guards on missing |
 | Client constant | `packages/api/src/constants.ts` — `DEV_WORKSPACE_ID`, `WORKSPACE_ID_HEADER` |
@@ -85,39 +85,12 @@ CREATE TABLE locations (
 
 ### TypeScript
 
-```ts
-// packages/api/src/schemas.ts
-type LocationResource = {
-  id: string
-  workspaceId: string
-  name: string
-  address: string
-  locationType: string
-  geometry: GeoJsonGeometry          // { type: string, coordinates: unknown }
-  createdAt: string
-  updatedAt: string
-}
-```
-
-The repository uses `LocationRow = LocationResource` and defines input types:
+Types and Elysia validators are defined in `@doors/api` — schemas are the source of truth; TypeScript types are derived via `Static<typeof schema>`.
 
 ```ts
-// apps/server/src/db/repos/locationRepo.ts
-type CreateLocationInput = {
-  id?: string
-  workspaceId: string
-  name: string
-  address?: string
-  locationType?: string
-  geometry: GeoJsonGeometry
-}
-
-type UpdateLocationInput = {
-  name?: string
-  address?: string
-  locationType?: string
-  geometry?: GeoJsonGeometry
-}
+// packages/api/src/entities/location.ts — LocationResource, CreateLocationInput, UpdateLocationInput
+// packages/api/src/geo/geoJson.ts — GeoJsonGeometry
+// packages/api/src/validators/location.ts — createLocationBodySchema, updateLocationBodySchema
 ```
 
 ### API routes
@@ -139,10 +112,11 @@ Route definition: `apps/server/src/routes/locations.ts`.
 | What | Where |
 |------|-------|
 | SQL DDL | `apps/server/migrations/001_init.sql` — `CREATE TABLE locations` |
-| API response type | `packages/api/src/schemas.ts` — `LocationResource`, `GeoJsonGeometry` |
-| Repository input types | `apps/server/src/db/repos/locationRepo.ts` — `CreateLocationInput`, `UpdateLocationInput` |
+| API response type | `packages/api/src/entities/location.ts` — `LocationResource` |
+| GeoJSON geometry | `packages/api/src/geo/geoJson.ts` — `geoJsonGeometrySchema`, `GeoJsonGeometry` |
+| Repository input types | `packages/api/src/entities/location.ts` — `CreateLocationInput`, `UpdateLocationInput` |
 | Repository functions | `apps/server/src/db/repos/locationRepo.ts` — CRUD |
-| Route schemas | `apps/server/src/routes/locations.ts` — Elysia `t.Object` validators |
+| Route validators | `packages/api/src/validators/location.ts` — `createLocationBodySchema`, `updateLocationBodySchema`, `listLocationsQuerySchema` |
 | API route file | `apps/server/src/routes/locations.ts` |
 | Seed usage | `apps/server/scripts/seed.ts` — 20 Portland venues + ~20 micro-locations |
 
@@ -181,41 +155,8 @@ CREATE TABLE people (
 ### TypeScript
 
 ```ts
-// packages/api/src/schemas.ts
-type PersonResource = {
-  id: string
-  workspaceId: string
-  displayName: string
-  email: string
-  phone: string
-  locationId: string | null
-  metadata: Record<string, unknown>
-  createdAt: string
-  updatedAt: string
-}
-```
-
-Repository input types:
-
-```ts
-// apps/server/src/db/repos/personRepo.ts
-type CreatePersonInput = {
-  id?: string
-  workspaceId: string
-  displayName: string
-  email?: string
-  phone?: string
-  locationId?: string | null
-  metadata?: Record<string, unknown>
-}
-
-type UpdatePersonInput = {
-  displayName?: string
-  email?: string
-  phone?: string
-  locationId?: string | null
-  metadata?: Record<string, unknown>
-}
+// packages/api/src/entities/person.ts — PersonResource, CreatePersonInput, UpdatePersonInput
+// packages/api/src/validators/person.ts — createPersonBodySchema, updatePersonBodySchema
 ```
 
 A `LocationWorkspaceMismatchError` is thrown when creating/updating a person's location reference if the location belongs to a different workspace.
@@ -246,28 +187,32 @@ Route definitions: `apps/server/src/routes/people.ts`, `apps/server/src/routes/m
 | What | Where |
 |------|-------|
 | SQL DDL | `apps/server/migrations/001_init.sql` — `CREATE TABLE people` |
-| API response type | `packages/api/src/schemas.ts` — `PersonResource` |
-| Repository input types | `apps/server/src/db/repos/personRepo.ts` — `CreatePersonInput`, `UpdatePersonInput` |
-| Repository functions | `apps/server/src/db/repos/personRepo.ts` — CRUD + `createPersonAlias` |
+| API response type | `packages/api/src/entities/person.ts` — `PersonResource` |
+| Repository input types | `packages/api/src/entities/person.ts` — `CreatePersonInput`, `UpdatePersonInput` |
+| Repository functions | `apps/server/src/db/repos/personRepo.ts` — CRUD + `createPersonLink` |
 | Domain error | `apps/server/src/db/repos/personRepo.ts` — `LocationWorkspaceMismatchError` |
-| Route schemas | `apps/server/src/routes/people.ts` — Elysia `t.Object` validators |
+| Route validators | `packages/api/src/validators/person.ts` — `createPersonBodySchema`, `updatePersonBodySchema` |
+| Map route validators | `packages/api/src/validators/mapPeople.ts` — `mapPeopleQuerySchema` |
+| Stats route validators | `packages/api/src/validators/stats.ts` — `histogramQuerySchema` |
 | Map route | `apps/server/src/routes/map.ts` — GeoJSON people layer |
 | Stats route | `apps/server/src/routes/stats.ts` — metadata histograms |
-| GeoJSON feature types | `packages/api/src/schemas.ts` — `MapPersonProperties`, `MapClusterProperties`, `GeoJsonFeatureCollection` |
+| GeoJSON feature types | `packages/api/src/geo/mapPeople.ts` — `MapPersonProperties`, `MapClusterProperties`, `GeoJsonFeatureCollection` |
 | Map filter types | `apps/server/src/db/geo/mapFilters.ts` — `MapPeopleFilters`, `MapBucketRow`, `ClusterRow` |
 | Seed usage | `apps/server/scripts/seed.ts` — ~70 people across 20 Portland venues |
 
 ---
 
-## Person Alias
+## Person Link
 
-A **person alias** bridges a person record to an external identity from another system (e.g., a CRM id, a legacy database key). The combination `(workspace_id, source, external_id)` is unique.
+A **person link** maps a person record to an **external identity** from another system — for example a Salesforce contact id, a legacy database key, or a dev-seed marker. The combination `(workspace_id, source, external_id)` is unique: one external id per source per workspace.
+
+There is **no public HTTP route** for links today. Types live in [`packages/api/src/entities/personLink.ts`](../packages/api/src/entities/personLink.ts). The seed attaches links with `source: 'dev-seed'` via `createPersonLink()` and `CreatePersonLinkInput`.
 
 ### SQL
 
 ```sql
 -- apps/server/migrations/001_init.sql
-CREATE TABLE person_aliases (
+CREATE TABLE person_links (
   id            UUID PRIMARY KEY,
   workspace_id  UUID NOT NULL REFERENCES workspaces (id) ON DELETE CASCADE,
   person_id     UUID NOT NULL REFERENCES people (id) ON DELETE CASCADE,
@@ -278,13 +223,22 @@ CREATE TABLE person_aliases (
 );
 ```
 
+Existing databases that still have `person_aliases` are upgraded by `002_rename_person_aliases_to_person_links.sql`.
+
 ### TypeScript
 
-There is no dedicated exported type — the alias is used inline in the repository:
-
 ```ts
-// apps/server/src/db/repos/personRepo.ts
-input: {
+// packages/api/src/entities/personLink.ts
+type PersonLink = {
+  id: string
+  workspaceId: string
+  personId: string
+  source: string
+  externalId: string
+  createdAt: string
+}
+
+type CreatePersonLinkInput = {
   id?: string
   workspaceId: string
   personId: string
@@ -295,14 +249,15 @@ input: {
 
 ### API routes
 
-None yet — `createPersonAlias` exists in the repository but has no route. It is only called from the seed script.
+None yet — `createPersonLink` exists in the repository but has no route. It is only called from the seed script.
 
-### How to find everything about Person Alias
+### How to find everything about Person Link
 
 | What | Where |
 |------|-------|
-| SQL DDL | `apps/server/migrations/001_init.sql` — `CREATE TABLE person_aliases` |
-| Repository function | `apps/server/src/db/repos/personRepo.ts` — `createPersonAlias()` |
+| SQL DDL | `apps/server/migrations/001_init.sql` — `CREATE TABLE person_links` |
+| TypeScript type | `packages/api/src/entities/personLink.ts` — `PersonLink`, `CreatePersonLinkInput` |
+| Repository function | `apps/server/src/db/repos/personRepo.ts` — `createPersonLink()` |
 | Seed usage | `apps/server/scripts/seed.ts` — attached to the first 5 seeded people with source `'dev-seed'` |
 
 ---
@@ -312,14 +267,14 @@ None yet — `createPersonAlias` exists in the repository but has no route. It i
 ```
 Workspace (1) ──→ Location (many)
 Workspace (1) ──→ Person (many)
-Workspace (1) ──→ PersonAlias (many)
+Workspace (1) ──→ PersonLink (many)
   Person (1) ──→ Location (optional, many-to-one)
-  Person (1) ──→ PersonAlias (many)
+  Person (1) ──→ PersonLink (many)
 
 Location has: workspace_id FK → Workspace
 Person has:   workspace_id FK → Workspace
               location_id  FK → Location  (SET NULL on delete)
-PersonAlias has: workspace_id FK → Workspace
+PersonLink has: workspace_id FK → Workspace
                  person_id    FK → Person    (CASCADE on delete)
                  UNIQUE(workspace_id, source, external_id)
 ```
@@ -339,10 +294,10 @@ PersonAlias has: workspace_id FK → Workspace
 If you need to trace a concept end-to-end, follow this pattern:
 
 1. **SQL schema** → `apps/server/migrations/001_init.sql` (the single source of truth for all tables)
-2. **API response type** → `packages/api/src/schemas.ts` (types shared between server and mobile via `@doors/api/schemas`)
-3. **Repository input types** → `apps/server/src/db/repos/<entity>Repo.ts` (database access layer)
-4. **Route file** → `apps/server/src/routes/<entity>.ts` (Elysia handlers + validation schemas)
+2. **Domain types + validators** → `packages/api/src/entities/*`, `packages/api/src/validators/*`, `packages/api/src/geo/*` (shared between server and mobile via `@doors/api/...` subpaths)
+3. **Repository functions** → `apps/server/src/db/repos/<entity>Repo.ts` (database access layer; re-exports entity types)
+4. **Route file** → `apps/server/src/routes/<entity>.ts` (Elysia handlers importing shared validators)
 5. **Client usage** → `apps/mobile/src/hooks/` or `apps/mobile/src/lib/` (how the mobile app consumes the API)
 
 For map-specific queries, the flow is:
-`apps/server/src/routes/map.ts` → `apps/server/src/lib/queryParams.ts` (`MapQueryParams`) → `apps/server/src/db/geo/mapFilters.ts` (`MapPeopleFilters`) → `apps/server/src/db/repos/mapQueryRepo.ts` → `GeoJsonFeatureCollection`
+`apps/server/src/routes/map.ts` → `packages/api/src/validators/mapQuery.ts` (`MapFilterQuery`) → `apps/server/src/lib/queryParams.ts` (`buildMapPeopleFilters`) → `apps/server/src/db/geo/mapFilters.ts` (`MapPeopleFilters`) → `apps/server/src/db/repos/mapQueryRepo.ts` → `GeoJsonFeatureCollection` in `@doors/api/geo/mapPeople`

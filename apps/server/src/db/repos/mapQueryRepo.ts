@@ -1,4 +1,4 @@
-import type {HistogramBucket} from '@doors/api/schemas'
+import type {HistogramBucket} from '@doors/api/stats/histogram'
 
 import type {SqlClient} from '../client'
 import {buildMapWhereClause, type MapBucketRow, type MapPeopleFilters} from '../geo/mapFilters'

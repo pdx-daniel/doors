@@ -1,4 +1,4 @@
-import type {Bbox} from '@doors/api/schemas'
+import type {Bbox} from '@doors/api/geo/bbox'
 
 import type {MapBucketRow} from './mapFilters'
 

@@ -95,11 +95,11 @@
       "name": "@doors/api",
       "version": "0.0.1",
       "dependencies": {
-        "@babel/runtime": "^7.25.0",
         "@elysiajs/eden": "catalog:",
+        "elysia": "catalog:",
       },
       "devDependencies": {
-        "elysia": "catalog:",
+        "@doors/server": "workspace:*",
         "typescript": "^5.8.3",
       },
     },

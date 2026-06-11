@@ -1,4 +1,5 @@
-import {Elysia, t} from 'elysia'
+import {createPersonBodySchema, updatePersonBodySchema} from '@doors/api/validators/person'
+import {Elysia} from 'elysia'
 
 import {getSql} from '../db/client'
 import {
@@ -59,13 +60,7 @@ export const peopleRoutes = new Elysia({prefix: '/people'})
       }
     },
     {
-      body: t.Object({
-        displayName: t.String(),
-        email: t.Optional(t.String()),
-        phone: t.Optional(t.String()),
-        locationId: t.Optional(t.Union([t.String(), t.Null()])),
-        metadata: t.Optional(t.Record(t.String(), t.Unknown())),
-      }),
+      body: createPersonBodySchema,
     },
   )
   .patch(
@@ -93,13 +88,7 @@ export const peopleRoutes = new Elysia({prefix: '/people'})
       }
     },
     {
-      body: t.Object({
-        displayName: t.Optional(t.String()),
-        email: t.Optional(t.String()),
-        phone: t.Optional(t.String()),
-        locationId: t.Optional(t.Union([t.String(), t.Null()])),
-        metadata: t.Optional(t.Record(t.String(), t.Unknown())),
-      }),
+      body: updatePersonBodySchema,
     },
   )
   .delete('/:id', async ({workspaceId, params, set}) => {

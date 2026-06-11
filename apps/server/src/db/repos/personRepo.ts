@@ -1,11 +1,11 @@
-import type {PersonResource} from '@doors/api/schemas'
+import type {CreatePersonInput, PersonRow, UpdatePersonInput} from '@doors/api/entities/person'
+import type {CreatePersonLinkInput} from '@doors/api/entities/personLink'
 import type postgres from 'postgres'
 
 import {newId} from '../../lib/id'
 import type {SqlClient} from '../client'
 
-/** Person row returned from the database. */
-export type PersonRow = PersonResource
+export type {CreatePersonInput, PersonRow, UpdatePersonInput} from '@doors/api/entities/person'
 
 /** Thrown when a person references a location outside their workspace. */
 export class LocationWorkspaceMismatchError extends Error {
@@ -13,26 +13,6 @@ export class LocationWorkspaceMismatchError extends Error {
     super('Location does not belong to workspace')
     this.name = 'LocationWorkspaceMismatchError'
   }
-}
-
-/** Input for creating a person. */
-export type CreatePersonInput = {
-  id?: string
-  workspaceId: string
-  displayName: string
-  email?: string
-  phone?: string
-  locationId?: string | null
-  metadata?: Record<string, unknown>
-}
-
-/** Input for updating a person. */
-export type UpdatePersonInput = {
-  displayName?: string
-  email?: string
-  phone?: string
-  locationId?: string | null
-  metadata?: Record<string, unknown>
 }
 
 /**
@@ -229,23 +209,17 @@ export async function deletePerson(
 }
 
 /**
- * Inserts an external id alias for a person (seed-only until routes exist).
+ * Inserts an external id link for a person (seed-only until routes exist).
  */
-export async function createPersonAlias(
+export async function createPersonLink(
   sql: SqlClient,
-  input: {
-    id?: string
-    workspaceId: string
-    personId: string
-    source: string
-    externalId: string
-  },
+  input: CreatePersonLinkInput,
 ): Promise<void> {
   const id = input.id ?? newId()
 
-  // Upsert alias rows keyed by workspace, source, and external id.
+  // Upsert link rows keyed by workspace, source, and external id.
   await sql`
-    INSERT INTO person_aliases (id, workspace_id, person_id, source, external_id)
+    INSERT INTO person_links (id, workspace_id, person_id, source, external_id)
     VALUES (${id}, ${input.workspaceId}, ${input.personId}, ${input.source}, ${input.externalId})
     ON CONFLICT (workspace_id, source, external_id) DO UPDATE
       SET person_id = EXCLUDED.person_id

@@ -1,4 +1,9 @@
-import {Elysia, t} from 'elysia'
+import {
+  createLocationBodySchema,
+  listLocationsQuerySchema,
+  updateLocationBodySchema,
+} from '@doors/api/validators/location'
+import {Elysia} from 'elysia'
 
 import {getSql} from '../db/client'
 import {
@@ -10,11 +15,6 @@ import {
 } from '../db/repos/locationRepo'
 import {parseBbox} from '../lib/queryParams'
 import {workspacePlugin} from '../middleware/workspacePlugin'
-
-const geometrySchema = t.Object({
-  type: t.String(),
-  coordinates: t.Unknown(),
-})
 
 /**
  * CRUD routes for workspace-scoped locations.
@@ -30,9 +30,7 @@ export const locationRoutes = new Elysia({prefix: '/locations'})
       return await listLocations(sql, workspaceId, bbox)
     },
     {
-      query: t.Object({
-        bbox: t.Optional(t.String()),
-      }),
+      query: listLocationsQuerySchema,
     },
   )
   .get('/:id', async ({workspaceId, params, set}) => {
@@ -62,12 +60,7 @@ export const locationRoutes = new Elysia({prefix: '/locations'})
       })
     },
     {
-      body: t.Object({
-        name: t.String(),
-        address: t.Optional(t.String()),
-        locationType: t.Optional(t.String()),
-        geometry: geometrySchema,
-      }),
+      body: createLocationBodySchema,
     },
   )
   .patch(
@@ -85,12 +78,7 @@ export const locationRoutes = new Elysia({prefix: '/locations'})
       return location
     },
     {
-      body: t.Object({
-        name: t.Optional(t.String()),
-        address: t.Optional(t.String()),
-        locationType: t.Optional(t.String()),
-        geometry: t.Optional(geometrySchema),
-      }),
+      body: updateLocationBodySchema,
     },
   )
   .delete('/:id', async ({workspaceId, params, set}) => {

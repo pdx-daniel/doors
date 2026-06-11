@@ -1,5 +1,5 @@
 import {api} from '@doors/api'
-import type {GeoJsonFeatureCollection, MapViewport} from '@doors/api/schemas'
+import type {GeoJsonFeatureCollection, MapViewport} from '@doors/api/geo/mapPeople'
 import {useEffect, useRef, useState} from 'react'
 
 import {EMPTY_FEATURE_COLLECTION} from '@/lib/mapPeopleLayer'

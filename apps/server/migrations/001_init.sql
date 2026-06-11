@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS people (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS person_aliases (
+CREATE TABLE IF NOT EXISTS person_links (
   id UUID PRIMARY KEY,
   workspace_id UUID NOT NULL REFERENCES workspaces (id) ON DELETE CASCADE,
   person_id UUID NOT NULL REFERENCES people (id) ON DELETE CASCADE,
@@ -66,5 +66,5 @@ CREATE INDEX IF NOT EXISTS idx_people_location_id ON people (location_id);
 CREATE INDEX IF NOT EXISTS idx_people_metadata ON people USING GIN (metadata jsonb_path_ops);
 CREATE INDEX IF NOT EXISTS idx_people_search_vector ON people USING GIN (search_vector);
 
-CREATE INDEX IF NOT EXISTS idx_person_aliases_person_id ON person_aliases (person_id);
-CREATE INDEX IF NOT EXISTS idx_person_aliases_workspace_id ON person_aliases (workspace_id);
+CREATE INDEX IF NOT EXISTS idx_person_links_person_id ON person_links (person_id);
+CREATE INDEX IF NOT EXISTS idx_person_links_workspace_id ON person_links (workspace_id);

@@ -220,18 +220,22 @@ Path params have implicit `t.String()` types by default.
 })
 ```
 
-### Reusable inline schemas
+### Reusable shared schemas
 
-For types used in multiple routes within the same file, define them at the top of the file:
+Do not define body or query schemas inline in route files when they represent domain concepts. Put them in `packages/api/src/validators/` and import them:
 
 ```ts
-const geometrySchema = t.Object({
-  type: t.String(),
-  coordinates: t.Unknown(),
-})
+// apps/server/src/routes/locations.ts
+import {
+  createLocationBodySchema,
+  listLocationsQuerySchema,
+  updateLocationBodySchema,
+} from '@doors/api/validators/location'
+
+.post('/', handler, {body: createLocationBodySchema})
 ```
 
-Then reference them in body and query schemas.
+Geo helpers (e.g. `geometrySchema`) live in `@doors/api/geo/geoJson` or are re-exported from the entity's validator module. See [Adding shared domain types](#8-adding-shared-domain-types) below.
 
 ### Common type patterns
 
@@ -358,7 +362,8 @@ The package exposes several entry points:
 ```ts
 import {api, DEV_WORKSPACE_ID, WORKSPACE_ID_HEADER} from '@doors/api'
 import {WORKSPACE_ID_HEADER} from '@doors/api/constants'
-import type {GeoJsonFeatureCollection, MapViewport} from '@doors/api/schemas'
+import type {GeoJsonFeatureCollection, MapViewport} from '@doors/api/geo/mapPeople'
+import type {LocationResource} from '@doors/api/entities/location'
 ```
 
 These are configured in `packages/api/package.json`:
@@ -368,53 +373,107 @@ These are configured in `packages/api/package.json`:
   "exports": {
     ".": "./src/index.ts",
     "./constants": "./src/constants.ts",
-    "./schemas": "./src/schemas.ts"
+    "./entities/location": "./src/entities/location.ts",
+    "./entities/person": "./src/entities/person.ts",
+    "./validators/location": "./src/validators/location.ts",
+    "./geo/mapPeople": "./src/geo/mapPeople.ts"
   }
 }
 ```
 
+Import subpaths directly (`@doors/api/entities/person`, `@doors/api/validators/person`, etc.). The root `@doors/api` barrel re-exports only the most common client types.
+
 ---
 
-## 8. Adding shared schemas
+## 8. Adding shared domain types
 
-Types that cross the server–client boundary belong in `packages/api/src/schemas.ts`. This file is consumed by:
+Canonical entity shapes live in `@doors/api`. TypeBox/Elysia schemas are the **single source of truth**; TypeScript types are derived with `Static<typeof schema>` from `elysia`.
 
-- **Server** — import types for use in repo functions and route handler return values.
-- **Client** — import types for frontend logic (e.g., rendering MapPeopleFeature).
+Layout (see also [`docs/DOMAIN-CONCEPTS.md`](../DOMAIN-CONCEPTS.md)):
+
+```
+packages/api/src/
+├── entities/       # Resource rows + repo input types (workspace, location, person, personLink)
+├── validators/     # Route body/query schemas imported by apps/server/src/routes/
+├── geo/            # Bbox, GeoJSON, map feature types
+└── stats/          # Histogram response shapes
+```
+
+### Step 1: Add entity resource schema
+
+`packages/api/src/entities/event.ts`
 
 ```ts
-// packages/api/src/schemas.ts
+import {t, type Static} from 'elysia'
 
 /** Event resource returned by CRUD endpoints. */
-export type EventResource = {
-  id: string
-  workspaceId: string
-  name: string
-  description: string
-  startDate: string
-  createdAt: string
-  updatedAt: string
-}
+export const eventResourceSchema = t.Object({
+  id: t.String(),
+  workspaceId: t.String(),
+  name: t.String(),
+  description: t.String(),
+  startDate: t.String(),
+  createdAt: t.String(),
+  updatedAt: t.String(),
+})
 
-/** Payload for creating an event. */
-export type CreateEventPayload = {
-  name: string
-  description?: string
-  startDate: string
-}
+export type EventResource = Static<typeof eventResourceSchema>
+export type EventRow = EventResource
 ```
 
-After adding new types, re-export anything that should be public from `packages/api/src/index.ts`:
+### Step 2: Add route validators
+
+`packages/api/src/validators/event.ts`
 
 ```ts
-export type {EventResource, CreateEventPayload} from './schemas'
+import {t, type Static} from 'elysia'
+
+export const createEventBodySchema = t.Object({
+  name: t.String(),
+  description: t.Optional(t.String()),
+  startDate: t.String(),
+})
+
+export type CreateEventBody = Static<typeof createEventBodySchema>
+
+export const updateEventBodySchema = t.Object({
+  name: t.Optional(t.String()),
+  description: t.Optional(t.String()),
+  startDate: t.Optional(t.String()),
+})
 ```
 
-Then import in the server:
+Compose repo inputs in the entity module:
 
 ```ts
-import type {EventResource} from '@doors/api/schemas'
+// packages/api/src/entities/event.ts
+import type {CreateEventBody} from '../validators/event'
+
+export type CreateEventInput = {id?: string; workspaceId: string} & CreateEventBody
+export type UpdateEventInput = Static<typeof updateEventBodySchema>
 ```
+
+### Step 3: Wire server routes and repos
+
+```ts
+// apps/server/src/routes/events.ts
+import {createEventBodySchema} from '@doors/api/validators/event'
+
+.post('/', handler, {body: createEventBodySchema})
+```
+
+```ts
+// apps/server/src/db/repos/eventRepo.ts
+import type {CreateEventInput, EventRow} from '@doors/api/entities/event'
+```
+
+### Step 4: Export subpath + optional barrel re-export
+
+Add the new files to `packages/api/package.json` `exports`. Re-export types the mobile client needs from `packages/api/src/index.ts` (the only allowed barrel file).
+
+### Server-only entities
+
+Some entities have no HTTP routes yet but still belong in `entities/` for a single typed home — e.g. **`personLink`** maps a `Person` to an external id (`source` + `externalId`, unique per workspace). The seed script calls `createPersonLink()`; there is no `/v1/person-links` route today.
 
 ---
 
@@ -525,8 +584,9 @@ curl http://localhost:3000/v1/events
 - [ ] Define GET, POST, PATCH, DELETE handlers with typed query/body schemas
 - [ ] Export the route group
 - [ ] Register in `apps/server/src/app.ts` (import + `.use()`)
-- [ ] Create repo functions in `apps/server/src/db/repos/<resource>Repo.ts`
-- [ ] Add shared types in `packages/api/src/schemas.ts` if client needs them
-- [ ] Re-export new types from `packages/api/src/index.ts`
+- [ ] Create repo functions in `apps/server/src/db/repos/<resource>Repo.ts` (import types from `@doors/api/entities/<resource>`)
+- [ ] Add entity + validator modules in `packages/api/src/entities/` and `packages/api/src/validators/`
+- [ ] Register new subpaths in `packages/api/package.json` `exports`
+- [ ] Re-export client-facing types from `packages/api/src/index.ts` if needed
 - [ ] Run `bun run typecheck` to verify no type errors
 - [ ] Run `bun run check` to verify lint and format

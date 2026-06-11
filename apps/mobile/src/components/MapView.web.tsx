@@ -1,7 +1,7 @@
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
-import type {MapViewport} from '@doors/api/schemas'
+import type {MapViewport} from '@doors/api/geo/mapPeople'
 import type {ReactElement} from 'react'
 import {useCallback, useEffect, useRef} from 'react'
 import {StyleSheet, View} from 'react-native'

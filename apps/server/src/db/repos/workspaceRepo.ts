@@ -1,23 +1,9 @@
+import type {CreateWorkspaceInput, WorkspaceRow} from '@doors/api/entities/workspace'
+
 import {newId} from '../../lib/id'
 import type {SqlClient} from '../client'
 
-/** Supported workspace kinds. */
-export type WorkspaceKind = 'personal' | 'org'
-
-/** Workspace row returned from the database. */
-export type WorkspaceRow = {
-  id: string
-  kind: WorkspaceKind
-  name: string
-  createdAt: string
-}
-
-/** Input for creating a workspace. */
-export type CreateWorkspaceInput = {
-  id?: string
-  kind: WorkspaceKind
-  name: string
-}
+export type {CreateWorkspaceInput, WorkspaceRow} from '@doors/api/entities/workspace'
 
 /**
  * Inserts a workspace row, returning the persisted record.

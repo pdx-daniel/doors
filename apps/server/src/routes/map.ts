@@ -1,4 +1,5 @@
-import {Elysia, t} from 'elysia'
+import {mapPeopleQuerySchema} from '@doors/api/validators/mapPeople'
+import {Elysia} from 'elysia'
 
 import {getSql} from '../db/client'
 import {
@@ -9,7 +10,7 @@ import {
 } from '../db/geo/mapGeo'
 import {queryPeopleMapBuckets, queryPeopleVisualGroups} from '../db/repos/mapQueryRepo'
 import {mapBucketsToGeoJson} from '../lib/geoJson'
-import {buildMapPeopleFilters, type MapQueryParams} from '../lib/queryParams'
+import {buildMapPeopleFilters} from '../lib/queryParams'
 import {workspacePlugin} from '../middleware/workspacePlugin'
 
 /**
@@ -19,7 +20,7 @@ export const mapRoutes = new Elysia({prefix: '/map'}).use(workspacePlugin).get(
   '/people',
   async ({workspaceId, query}) => {
     const sql = getSql()
-    const filters = buildMapPeopleFilters(workspaceId, query as MapQueryParams)
+    const filters = buildMapPeopleFilters(workspaceId, query)
     const zoom = query.zoom ?? 12
     const clusterMode = query.cluster ?? 'auto'
     const precision = clusterMode === 'false' ? null : geohashPrecisionForZoom(Number(zoom))
@@ -43,15 +44,6 @@ export const mapRoutes = new Elysia({prefix: '/map'}).use(workspacePlugin).get(
     return mapBucketsToGeoJson(mergedRows, 'cluster')
   },
   {
-    query: t.Object({
-      bbox: t.Optional(t.String()),
-      radius: t.Optional(t.String()),
-      polygon: t.Optional(t.String()),
-      zoom: t.Optional(t.Number()),
-      q: t.Optional(t.String()),
-      filter: t.Optional(t.String()),
-      jsonpath: t.Optional(t.String()),
-      cluster: t.Optional(t.String()),
-    }),
+    query: mapPeopleQuerySchema,
   },
 )
