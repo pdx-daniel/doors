@@ -3,8 +3,8 @@ import {Elysia, t} from 'elysia'
 import {getSql} from '../db/client'
 import type {MapPeopleFilters} from '../db/geo/mapFilters'
 import {geohashPrecisionForZoom} from '../db/geo/mapFilters'
-import {queryPeopleClusters, queryPeoplePoints} from '../db/repos/mapQueryRepo'
-import {clustersToGeoJson, peoplePointsToGeoJson} from '../lib/geoJson'
+import {queryPeopleMapBuckets, queryPeoplePoints} from '../db/repos/mapQueryRepo'
+import {mapBucketsToGeoJson, peoplePointsToGeoJson} from '../lib/geoJson'
 import {missingWorkspaceResponse, readWorkspaceId} from '../middleware/workspace'
 
 /**
@@ -106,9 +106,9 @@ export const mapRoutes = new Elysia({prefix: '/map'}).get(
       return peoplePointsToGeoJson(rows)
     }
 
-    // Aggregate into geohash clusters for low-zoom map views.
-    const rows = await queryPeopleClusters(sql, filters, precision)
-    return clustersToGeoJson(rows)
+    // Aggregate into geohash buckets for low-zoom map views.
+    const rows = await queryPeopleMapBuckets(sql, filters, precision)
+    return mapBucketsToGeoJson(rows)
   },
   {
     query: t.Object({

@@ -32,6 +32,18 @@ export type ClusterRow = {
   lat: number
 }
 
+/** Mixed cluster/person bucket row from a single grouped map query. */
+export type MapBucketRow = ClusterRow & {
+  personId: string | null
+  displayName: string | null
+  email: string | null
+  phone: string | null
+  locationId: string | null
+  locationName: string | null
+  locationType: string | null
+  metadata: Record<string, unknown> | null
+}
+
 /** Individual person map point row from PostGIS. */
 export type PersonPointRow = {
   personId: string

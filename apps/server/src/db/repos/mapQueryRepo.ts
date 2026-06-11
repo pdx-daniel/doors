@@ -2,28 +2,44 @@ import {
   buildMapFilterFragments,
   type ClusterRow,
   type HistogramBucketRow,
+  type MapBucketRow,
   type MapPeopleFilters,
   type PersonPointRow,
 } from '../geo/mapFilters'
 import type {SqlClient} from './workspaceRepo'
 
 /**
- * Queries clustered people counts grouped by GeoHash cells.
+ * Queries geohash buckets for low-zoom map rendering.
+ * Multi-person cells become clusters; singleton cells include person metadata.
  */
-export async function queryPeopleClusters(
+export async function queryPeopleMapBuckets(
   sql: SqlClient,
   filters: MapPeopleFilters,
   precision: number,
-): Promise<ClusterRow[]> {
+): Promise<MapBucketRow[]> {
   const {geoSql, searchSql, locationTypeSql, jsonPathSql} = buildMapFilterFragments(filters)
 
-  // Aggregate people into geohash buckets for low-zoom map rendering.
-  return await sql.unsafe<ClusterRow[]>(`
+  // Aggregate once per geohash cell and pick representative person fields for singletons.
+  return await sql.unsafe<MapBucketRow[]>(`
     SELECT
       ST_GeoHash(l.geom, ${precision}) AS geohash,
       COUNT(*)::int AS count,
-      ST_X(ST_Centroid(ST_Collect(l.geom))) AS lng,
-      ST_Y(ST_Centroid(ST_Collect(l.geom))) AS lat
+      CASE
+        WHEN COUNT(*) > 1 THEN ST_X(ST_Centroid(ST_Collect(l.geom)))
+        ELSE ST_X(ST_Collect(l.geom))
+      END AS lng,
+      CASE
+        WHEN COUNT(*) > 1 THEN ST_Y(ST_Centroid(ST_Collect(l.geom)))
+        ELSE ST_Y(ST_Collect(l.geom))
+      END AS lat,
+      (array_agg(p.id ORDER BY p.id))[1] AS "personId",
+      (array_agg(p.display_name ORDER BY p.id))[1] AS "displayName",
+      (array_agg(p.email ORDER BY p.id))[1] AS email,
+      (array_agg(p.phone ORDER BY p.id))[1] AS phone,
+      (array_agg(l.id ORDER BY p.id))[1] AS "locationId",
+      (array_agg(l.name ORDER BY p.id))[1] AS "locationName",
+      (array_agg(l.location_type ORDER BY p.id))[1] AS "locationType",
+      (array_agg(p.metadata ORDER BY p.id))[1] AS metadata
     FROM people p
     INNER JOIN locations l ON l.id = p.location_id
     WHERE p.workspace_id = '${filters.workspaceId}'
@@ -35,6 +51,20 @@ export async function queryPeopleClusters(
     GROUP BY ST_GeoHash(l.geom, ${precision})
     ORDER BY count DESC
   `)
+}
+
+/**
+ * Queries clustered people counts grouped by GeoHash cells.
+ */
+export async function queryPeopleClusters(
+  sql: SqlClient,
+  filters: MapPeopleFilters,
+  precision: number,
+): Promise<ClusterRow[]> {
+  const buckets = await queryPeopleMapBuckets(sql, filters, precision)
+
+  // Keep the legacy cluster-only shape for callers that still expect it.
+  return buckets.filter(bucket => bucket.count > 1)
 }
 
 /**
