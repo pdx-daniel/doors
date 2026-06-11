@@ -16,7 +16,7 @@ function getWebPrefix(): string {
 
 /**
  * React Navigation linking config for web URL sync.
- * Maps `/`, `/dummy-1`, and `/dummy-2` to root tab routes.
+ * Maps `/`, `/dummy-1`, and `/settings` to root tab routes.
  */
 export const linking: LinkingOptions<RootTabParamList> = {
   prefixes: [getWebPrefix()],
@@ -28,7 +28,7 @@ export const linking: LinkingOptions<RootTabParamList> = {
       // biome-ignore lint/style/useNamingConvention: React Navigation screen names
       Dummy1: 'dummy-1',
       // biome-ignore lint/style/useNamingConvention: React Navigation screen names
-      Dummy2: 'dummy-2',
+      Settings: 'settings',
     },
   },
 }

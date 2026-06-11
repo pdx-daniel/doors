@@ -2,15 +2,16 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs'
 import type {ReactElement} from 'react'
 
 import {FloatingNavBar} from '@/components/FloatingNavBar'
+import {FloatingPanelOverlay} from '@/components/FloatingPanelOverlay'
 import type {RootTabParamList} from '@/navigation/linking'
-import {DummyScreen} from '@/screens/DummyScreen'
 import {MapScreen} from '@/screens/MapScreen'
+import {SettingsScreen} from '@/screens/SettingsScreen'
 
 const Tab = createBottomTabNavigator<RootTabParamList>()
 
 /**
  * Root bottom-tab navigator with transparent scenes over the persistent map.
- * Uses a custom floating tab bar instead of the default platform chrome.
+ * Map and overlay tabs sit above the map; Settings is a full-page route.
  */
 export function RootNavigator(): ReactElement {
   return (
@@ -29,20 +30,13 @@ export function RootNavigator(): ReactElement {
       <Tab.Screen name="Map" component={MapScreen} />
       <Tab.Screen name="Dummy1">
         {(): ReactElement => (
-          <DummyScreen
+          <FloatingPanelOverlay
             title="Dummy 1"
             description="Placeholder panel — the map stays mounted underneath."
           />
         )}
       </Tab.Screen>
-      <Tab.Screen name="Dummy2">
-        {(): ReactElement => (
-          <DummyScreen
-            title="Dummy 2"
-            description="Another placeholder route for future features."
-          />
-        )}
-      </Tab.Screen>
+      <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   )
 }

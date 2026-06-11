@@ -5,7 +5,8 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context'
 
 import {Box} from '@/components/ui/box'
 import {Text} from '@/components/ui/text'
-import {ROOT_TABS} from '@/navigation/routes'
+import {FLOATING_NAV_MARGIN} from '@/navigation/layout'
+import {ROOT_HOME_ROUTE, ROOT_TABS} from '@/navigation/routes'
 
 /**
  * Custom floating tab bar: top-aligned on web, bottom-aligned on native.
@@ -16,12 +17,25 @@ export function FloatingNavBar({state, navigation}: BottomTabBarProps): ReactEle
   const isWeb = Platform.OS === 'web'
 
   // Position the bar below/above safe-area insets.
-  const positionStyle = isWeb ? {top: insets.top + 12} : {bottom: insets.bottom + 12}
+  const positionStyle = isWeb
+    ? {top: insets.top + FLOATING_NAV_MARGIN}
+    : {bottom: insets.bottom + FLOATING_NAV_MARGIN}
+
+  const onBrandPress = (): void => {
+    navigation.navigate(ROOT_HOME_ROUTE)
+  }
 
   return (
     <Box className="absolute inset-x-4 z-50" style={positionStyle} pointerEvents="box-none">
       <Box className="flex-row items-center gap-3 rounded-full border border-white/10 bg-gray-900/90 px-4 py-2 shadow-lg">
-        {isWeb ? <Text className="shrink-0 text-sm font-bold text-gray-50">Doors</Text> : null}
+        {isWeb ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Go to map home"
+            onPress={onBrandPress}>
+            <Text className="shrink-0 text-sm font-bold text-gray-50">Doors</Text>
+          </Pressable>
+        ) : null}
         <Box
           className={`min-w-0 flex-1 flex-row items-center gap-1 ${isWeb ? 'justify-end' : 'justify-around'}`}>
           {state.routes.map((route, index) => {

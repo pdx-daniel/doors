@@ -6,11 +6,9 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context'
 import {MapView} from '@/components/MapView'
 import {MAP_ATTRIBUTION} from '@/constants/map'
 import {useMapAppearance} from '@/hooks/useMapAppearance'
+import {FLOATING_NAV_HEIGHT, FLOATING_NAV_MARGIN} from '@/navigation/layout'
 import {linking} from '@/navigation/linking'
 import {RootNavigator} from '@/navigation/RootNavigator'
-
-/** Approximate height of the floating nav bar plus its bottom margin on native. */
-const NATIVE_NAV_CLEARANCE = 72
 
 /**
  * App shell: persistent map layer with navigation and attribution overlays.
@@ -23,7 +21,9 @@ export function AppShell(): ReactElement {
   const isWeb = Platform.OS === 'web'
 
   // Keep attribution above the bottom nav on native; near bottom-left on web.
-  const attributionBottom = isWeb ? 8 + insets.bottom : NATIVE_NAV_CLEARANCE + insets.bottom
+  const attributionBottom = isWeb
+    ? 8 + insets.bottom
+    : FLOATING_NAV_HEIGHT + FLOATING_NAV_MARGIN + insets.bottom
 
   return (
     <View style={styles.container}>
