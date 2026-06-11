@@ -1,4 +1,5 @@
 const path = require('node:path')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const webpack = require('webpack')
 
@@ -51,6 +52,16 @@ module.exports = {
       'process.env.DOORS_API_URL': JSON.stringify(
         process.env.DOORS_API_URL ?? 'http://localhost:3000',
       ),
+    }),
+    // Copy basemap assets into web-dist for production builds (dev server serves public/ directly).
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: path.join(appRoot, 'public/basemaps'),
+          to: 'basemaps',
+          noErrorOnMissing: true,
+        },
+      ],
     }),
   ],
   devServer: {

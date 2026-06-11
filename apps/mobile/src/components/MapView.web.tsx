@@ -4,15 +4,23 @@ import type {ReactElement} from 'react'
 import {useEffect, useRef} from 'react'
 import {StyleSheet, View} from 'react-native'
 
-import {DEFAULT_CENTER, DEFAULT_ZOOM, LIBERTY_STYLE_URL} from '../constants/map'
+import {
+  DEFAULT_CENTER,
+  DEFAULT_ZOOM,
+  getBasemapPmtilesUrl,
+  LIBERTY_STYLE_URL,
+} from '../constants/map'
+import {buildBasemapStyle} from '../lib/basemapStyle'
+import {registerPmtilesProtocol} from '../lib/registerPmtilesProtocol'
 
 /**
  * Web map renderer backed by maplibre-gl v5.
- * Attaches MapLibre to the DOM node behind an RN-web `View` ref.
+ * Loads local PMTiles when available and falls back to OpenFreeMap Liberty on failure.
  */
 export function MapView(): ReactElement {
   const hostRef = useRef<View>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
+  const fallbackUsedRef = useRef(false)
 
   useEffect(() => {
     // RN-web exposes the underlying DOM element through the View ref.
@@ -21,15 +29,31 @@ export function MapView(): ReactElement {
       return
     }
 
+    // Enable pmtiles:// sources before constructing the map instance.
+    registerPmtilesProtocol()
+
+    // Build a local style that points at the dev-server PMTiles archive.
+    const basemapStyle = buildBasemapStyle(getBasemapPmtilesUrl())
+
     // Create the MapLibre instance against the host DOM node.
     const map = new maplibregl.Map({
       container: hostElement,
-      style: LIBERTY_STYLE_URL,
+      style: basemapStyle,
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
     })
 
     mapRef.current = map
+
+    // Fall back to the remote Liberty style when local tiles or style assets fail.
+    map.on('error', () => {
+      if (fallbackUsedRef.current) {
+        return
+      }
+
+      fallbackUsedRef.current = true
+      map.setStyle(LIBERTY_STYLE_URL)
+    })
 
     // Resize once tiles load in case layout settled after first paint.
     map.once('load', () => {

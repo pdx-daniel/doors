@@ -23,7 +23,8 @@
     "check": "biome check --write .",
     "check:unsafe": "biome check --write --unsafe .",
     "ci": "biome ci .",
-    "typecheck": "bun run --filter '*' typecheck"
+    "typecheck": "bun run --filter '*' typecheck",
+    "basemap:refresh": "make basemap-refresh"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.16"

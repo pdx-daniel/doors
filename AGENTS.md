@@ -46,8 +46,9 @@ packages/api/    Eden Treaty client
 bun run dev:server    # API on :3000
 bun run dev:mobile    # Metro bundler
 bun run dev:web       # Webpack dev server on :3001
-bun run ios           # iOS simulator
-bun run check         # format + lint + safe fixes
+bun run ios             # iOS simulator
+bun run basemap:refresh # Local PMTiles basemap via Planetiler Docker (before custom tiles)
+bun run check           # format + lint + safe fixes
 bun run check:unsafe  # same, plus unsafe fixes (e.g. node: protocol)
 bun run ci            # read-only Biome check (CI)
 bun run typecheck     # TypeScript across workspaces

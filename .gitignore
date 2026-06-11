@@ -31,3 +31,7 @@ apps/mobile/android/local.properties
 
 # Webpack
 apps/mobile/web-dist/
+
+# Planetiler / PMTiles basemap artifacts
+data/planetiler/
+apps/mobile/public/basemaps/*.pmtiles
