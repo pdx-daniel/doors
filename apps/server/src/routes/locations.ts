@@ -8,7 +8,8 @@ import {
   listLocations,
   updateLocation,
 } from '../db/repos/locationRepo'
-import {missingWorkspaceResponse, readWorkspaceId} from '../middleware/workspace'
+import {parseBbox} from '../lib/queryParams'
+import {workspacePlugin} from '../middleware/workspacePlugin'
 
 const geometrySchema = t.Object({
   type: t.String(),
@@ -19,29 +20,12 @@ const geometrySchema = t.Object({
  * CRUD routes for workspace-scoped locations.
  */
 export const locationRoutes = new Elysia({prefix: '/locations'})
+  .use(workspacePlugin)
   .get(
     '/',
-    async ({headers, query, set}) => {
-      const workspaceId = readWorkspaceId(headers)
-      if (!workspaceId) {
-        set.status = 400
-        return missingWorkspaceResponse()
-      }
-
+    async ({workspaceId, query}) => {
       const sql = getSql()
-
-      // Parse an optional bbox filter from comma-separated query params.
-      const bbox = query.bbox
-        ? ((): {west: number; south: number; east: number; north: number} => {
-            const parts = query.bbox.split(',').map(Number)
-            return {
-              west: parts[0] ?? 0,
-              south: parts[1] ?? 0,
-              east: parts[2] ?? 0,
-              north: parts[3] ?? 0,
-            }
-          })()
-        : undefined
+      const bbox = parseBbox(query.bbox)
 
       return await listLocations(sql, workspaceId, bbox)
     },
@@ -51,13 +35,7 @@ export const locationRoutes = new Elysia({prefix: '/locations'})
       }),
     },
   )
-  .get('/:id', async ({headers, params, set}) => {
-    const workspaceId = readWorkspaceId(headers)
-    if (!workspaceId) {
-      set.status = 400
-      return missingWorkspaceResponse()
-    }
-
+  .get('/:id', async ({workspaceId, params, set}) => {
     const sql = getSql()
     const location = await getLocationById(sql, workspaceId, params.id)
 
@@ -71,22 +49,16 @@ export const locationRoutes = new Elysia({prefix: '/locations'})
   })
   .post(
     '/',
-    async ({headers, body, set}) => {
-      const workspaceId = readWorkspaceId(headers)
-      if (!workspaceId) {
-        set.status = 400
-        return missingWorkspaceResponse()
-      }
-
+    async ({workspaceId, body}) => {
       const sql = getSql()
 
       // Create a location with GeoJSON geometry in the workspace scope.
       return await createLocation(sql, {
         workspaceId,
         name: body.name,
+        geometry: body.geometry,
         ...(body.address !== undefined ? {address: body.address} : {}),
         ...(body.locationType !== undefined ? {locationType: body.locationType} : {}),
-        geometry: body.geometry,
       })
     },
     {
@@ -100,13 +72,7 @@ export const locationRoutes = new Elysia({prefix: '/locations'})
   )
   .patch(
     '/:id',
-    async ({headers, params, body, set}) => {
-      const workspaceId = readWorkspaceId(headers)
-      if (!workspaceId) {
-        set.status = 400
-        return missingWorkspaceResponse()
-      }
-
+    async ({workspaceId, params, body, set}) => {
       const sql = getSql()
       const location = await updateLocation(sql, workspaceId, params.id, body)
 
@@ -127,13 +93,7 @@ export const locationRoutes = new Elysia({prefix: '/locations'})
       }),
     },
   )
-  .delete('/:id', async ({headers, params, set}) => {
-    const workspaceId = readWorkspaceId(headers)
-    if (!workspaceId) {
-      set.status = 400
-      return missingWorkspaceResponse()
-    }
-
+  .delete('/:id', async ({workspaceId, params, set}) => {
     const sql = getSql()
     const deleted = await deleteLocation(sql, workspaceId, params.id)
 

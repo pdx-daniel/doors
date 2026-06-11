@@ -1,11 +1,6 @@
 -- Enable PostGIS for geometry columns and spatial queries.
 CREATE EXTENSION IF NOT EXISTS postgis;
 
-CREATE TABLE IF NOT EXISTS schema_migrations (
-  version TEXT PRIMARY KEY,
-  applied_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
 CREATE TABLE IF NOT EXISTS workspaces (
   id UUID PRIMARY KEY,
   kind TEXT NOT NULL CHECK (kind IN ('personal', 'org')),

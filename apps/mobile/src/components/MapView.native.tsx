@@ -1,4 +1,3 @@
-import type {MapViewport} from '@doors/api/schemas'
 import {
   Camera,
   GeoJSONSource,
@@ -7,22 +6,12 @@ import {
   type PressEventWithFeatures,
   type ViewStateChangeEvent,
 } from '@maplibre/maplibre-react-native'
-import type {StyleSpecification} from 'maplibre-gl'
 import type {ReactElement} from 'react'
-import {useCallback, useMemo, useState} from 'react'
+import {useCallback} from 'react'
 import {type NativeSyntheticEvent, StyleSheet, View} from 'react-native'
 
-import {
-  DEFAULT_CENTER,
-  DEFAULT_ZOOM,
-  getBasemapPmtilesUrl,
-  getRemoteFallbackStyleUrl,
-} from '../constants/map'
-import {useApiHealth} from '../hooks/useApiHealth'
-import {useMapAppearance} from '../hooks/useMapAppearance'
-import {useMapPeople} from '../hooks/useMapPeople'
-import {buildBasemapStyle} from '../lib/basemapStyle'
-import {logMapPersonFeature} from '../lib/logMapPersonFeature'
+import {DEFAULT_CENTER, DEFAULT_ZOOM} from '@/constants/map'
+import {useMapViewModel} from '@/hooks/useMapViewModel'
 import {
   PEOPLE_CIRCLE_LAYER_ID,
   PEOPLE_COUNT_LAYER_ID,
@@ -31,63 +20,41 @@ import {
   peopleCountFilter,
   peopleCountLayout,
   peopleCountPaint,
-} from '../lib/mapPeopleLayer'
+} from '@/lib/mapPeopleLayer'
 
 /**
  * Native iOS/Android map renderer backed by @maplibre/maplibre-react-native v11.
  * Uses built-in pmtiles:// support in phase 1 (simulator dev server) with OpenFreeMap fallback.
  */
 export function MapView(): ReactElement {
-  const appearance = useMapAppearance()
-  const [fallbackUsed, setFallbackUsed] = useState(false)
-  const [viewport, setViewport] = useState<MapViewport | null>(null)
-  const apiHealth = useApiHealth()
-  const peopleEnabled = apiHealth === 'ok'
-  const {data: peopleData} = useMapPeople(viewport, peopleEnabled)
-
-  const mapStyle = useMemo((): string | StyleSpecification => {
-    if (fallbackUsed) {
-      return getRemoteFallbackStyleUrl(appearance)
-    }
-
-    return buildBasemapStyle(getBasemapPmtilesUrl(), appearance)
-  }, [appearance, fallbackUsed])
-
-  const handleMapLoadFailure = useCallback((): void => {
-    // Swap to the remote OpenFreeMap style once when local PMTiles are unreachable.
-    if (fallbackUsed) {
-      return
-    }
-
-    setFallbackUsed(true)
-  }, [fallbackUsed])
+  const {setViewport, peopleData, peopleEnabled, mapStyle, onBasemapFailure, onPeoplePress} =
+    useMapViewModel()
 
   const handleRegionDidChange = useCallback(
     (event: NativeSyntheticEvent<ViewStateChangeEvent>): void => {
       const {bounds, zoom} = event.nativeEvent
       const [west, south, east, north] = bounds
 
-      // Store the latest viewport for debounced people fetching.
       setViewport({west, south, east, north, zoom})
     },
-    [],
+    [setViewport],
   )
 
   const handlePeoplePress = useCallback(
     (event: NativeSyntheticEvent<PressEventWithFeatures>): void => {
       const feature = event.nativeEvent.features?.[0]
       if (feature?.properties) {
-        logMapPersonFeature(feature.properties)
+        onPeoplePress(feature.properties)
       }
     },
-    [],
+    [onPeoplePress],
   )
 
   return (
     <View style={styles.container}>
       <MaplibreMap
         mapStyle={mapStyle}
-        onDidFailLoadingMap={handleMapLoadFailure}
+        onDidFailLoadingMap={onBasemapFailure}
         onRegionDidChange={handleRegionDidChange}
         style={styles.map}>
         <Camera
@@ -119,7 +86,6 @@ export function MapView(): ReactElement {
   )
 }
 
-/** Layout styles for a map that expands to fill its parent. */
 const styles = StyleSheet.create({
   container: {
     flex: 1,

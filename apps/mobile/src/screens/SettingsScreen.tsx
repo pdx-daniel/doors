@@ -32,7 +32,7 @@ export function SettingsScreen(): ReactElement {
         </Text>
         <Box className="mt-6 rounded-xl border border-white/10 bg-gray-900/60 px-4 py-4">
           <Text className="text-sm font-medium text-gray-200">Appearance</Text>
-          <Text className="mt-1 text-sm text-gray-400">Follow system theme (coming soon)</Text>
+          <Text className="mt-1 text-sm text-gray-400">Follows system light/dark appearance</Text>
         </Box>
         <Box className="mt-3 rounded-xl border border-white/10 bg-gray-900/60 px-4 py-4">
           <Text className="text-sm font-medium text-gray-200">About</Text>

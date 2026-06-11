@@ -5,34 +5,24 @@ import {
   createPerson,
   deletePerson,
   getPersonById,
+  LocationWorkspaceMismatchError,
   listPeople,
   updatePerson,
 } from '../db/repos/personRepo'
-import {missingWorkspaceResponse, readWorkspaceId} from '../middleware/workspace'
+import {workspacePlugin} from '../middleware/workspacePlugin'
 
 /**
  * CRUD routes for workspace-scoped people.
  */
 export const peopleRoutes = new Elysia({prefix: '/people'})
-  .get('/', async ({headers, set}) => {
-    const workspaceId = readWorkspaceId(headers)
-    if (!workspaceId) {
-      set.status = 400
-      return missingWorkspaceResponse()
-    }
-
+  .use(workspacePlugin)
+  .get('/', async ({workspaceId}) => {
     const sql = getSql()
 
     // List all people in the workspace ordered by display name.
     return await listPeople(sql, workspaceId)
   })
-  .get('/:id', async ({headers, params, set}) => {
-    const workspaceId = readWorkspaceId(headers)
-    if (!workspaceId) {
-      set.status = 400
-      return missingWorkspaceResponse()
-    }
-
+  .get('/:id', async ({workspaceId, params, set}) => {
     const sql = getSql()
     const person = await getPersonById(sql, workspaceId, params.id)
 
@@ -46,24 +36,27 @@ export const peopleRoutes = new Elysia({prefix: '/people'})
   })
   .post(
     '/',
-    async ({headers, body, set}) => {
-      const workspaceId = readWorkspaceId(headers)
-      if (!workspaceId) {
-        set.status = 400
-        return missingWorkspaceResponse()
-      }
-
+    async ({workspaceId, body, set}) => {
       const sql = getSql()
 
-      // Create a person linked to an optional location in the workspace.
-      return await createPerson(sql, {
-        workspaceId,
-        displayName: body.displayName,
-        ...(body.email !== undefined ? {email: body.email} : {}),
-        ...(body.phone !== undefined ? {phone: body.phone} : {}),
-        ...(body.locationId !== undefined ? {locationId: body.locationId} : {}),
-        ...(body.metadata !== undefined ? {metadata: body.metadata} : {}),
-      })
+      try {
+        // Create a person linked to an optional location in the workspace.
+        return await createPerson(sql, {
+          workspaceId,
+          displayName: body.displayName,
+          ...(body.email !== undefined ? {email: body.email} : {}),
+          ...(body.phone !== undefined ? {phone: body.phone} : {}),
+          ...(body.locationId !== undefined ? {locationId: body.locationId} : {}),
+          ...(body.metadata !== undefined ? {metadata: body.metadata} : {}),
+        })
+      } catch (error) {
+        if (error instanceof LocationWorkspaceMismatchError) {
+          set.status = 400
+          return {error: error.message}
+        }
+
+        throw error
+      }
     },
     {
       body: t.Object({
@@ -77,23 +70,27 @@ export const peopleRoutes = new Elysia({prefix: '/people'})
   )
   .patch(
     '/:id',
-    async ({headers, params, body, set}) => {
-      const workspaceId = readWorkspaceId(headers)
-      if (!workspaceId) {
-        set.status = 400
-        return missingWorkspaceResponse()
-      }
-
+    async ({workspaceId, params, body, set}) => {
       const sql = getSql()
-      const person = await updatePerson(sql, workspaceId, params.id, body)
 
-      // Return 404 when the target person does not exist.
-      if (!person) {
-        set.status = 404
-        return {error: 'Person not found'}
+      try {
+        const person = await updatePerson(sql, workspaceId, params.id, body)
+
+        // Return 404 when the target person does not exist.
+        if (!person) {
+          set.status = 404
+          return {error: 'Person not found'}
+        }
+
+        return person
+      } catch (error) {
+        if (error instanceof LocationWorkspaceMismatchError) {
+          set.status = 400
+          return {error: error.message}
+        }
+
+        throw error
       }
-
-      return person
     },
     {
       body: t.Object({
@@ -105,13 +102,7 @@ export const peopleRoutes = new Elysia({prefix: '/people'})
       }),
     },
   )
-  .delete('/:id', async ({headers, params, set}) => {
-    const workspaceId = readWorkspaceId(headers)
-    if (!workspaceId) {
-      set.status = 400
-      return missingWorkspaceResponse()
-    }
-
+  .delete('/:id', async ({workspaceId, params, set}) => {
     const sql = getSql()
     const deleted = await deletePerson(sql, workspaceId, params.id)
 

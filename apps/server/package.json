@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "bun --env-file=../../.env run scripts/migrate.ts",
     "db:seed": "bun --env-file=../../.env run scripts/seed.ts",
-    "db:reset": "bun --env-file=../../.env run scripts/seed.ts"
+    "db:reseed": "bun --env-file=../../.env run scripts/seed.ts"
   },
   "dependencies": {
     "@doors/api": "workspace:*",

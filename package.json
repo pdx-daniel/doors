@@ -29,7 +29,7 @@
     "db:down": "docker compose down",
     "db:migrate": "bun run --filter @doors/server db:migrate",
     "db:seed": "bun run --filter @doors/server db:seed",
-    "db:reset": "bun run --filter @doors/server db:reset"
+    "db:reseed": "bun run --filter @doors/server db:reseed"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.16"

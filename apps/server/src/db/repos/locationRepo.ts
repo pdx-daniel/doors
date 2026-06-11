@@ -1,23 +1,10 @@
-import type {SqlClient} from '../repos/workspaceRepo'
-import {newId} from '../repos/workspaceRepo'
+import type {Bbox, GeoJsonGeometry, LocationResource} from '@doors/api/schemas'
+
+import {newId} from '../../lib/id'
+import type {SqlClient} from '../client'
 
 /** Location row returned from the database. */
-export type LocationRow = {
-  id: string
-  workspaceId: string
-  name: string
-  address: string
-  locationType: string
-  geometry: GeoJsonGeometry
-  createdAt: string
-  updatedAt: string
-}
-
-/** GeoJSON geometry accepted by location create/update APIs. */
-export type GeoJsonGeometry = {
-  type: string
-  coordinates: unknown
-}
+export type LocationRow = LocationResource
 
 /** Input for creating a location. */
 export type CreateLocationInput = {
@@ -37,13 +24,16 @@ export type UpdateLocationInput = {
   geometry?: GeoJsonGeometry
 }
 
-/** Optional bounding box filter for listing locations. */
-export type BboxFilter = {
-  west: number
-  south: number
-  east: number
-  north: number
-}
+const locationColumns = `
+  l.id,
+  l.workspace_id AS "workspaceId",
+  l.name,
+  l.address,
+  l.location_type AS "locationType",
+  ST_AsGeoJSON(l.geom)::json AS geometry,
+  l.created_at AS "createdAt",
+  l.updated_at AS "updatedAt"
+`
 
 /**
  * Lists locations in a workspace, optionally constrained to a bounding box.
@@ -51,46 +41,18 @@ export type BboxFilter = {
 export async function listLocations(
   sql: SqlClient,
   workspaceId: string,
-  bbox?: BboxFilter,
+  bbox?: Bbox,
 ): Promise<LocationRow[]> {
-  if (bbox) {
-    // Filter locations whose geometry intersects the requested envelope.
-    return await sql<LocationRow[]>`
-      SELECT
-        l.id,
-        l.workspace_id AS "workspaceId",
-        l.name,
-        l.address,
-        l.location_type AS "locationType",
-        ST_AsGeoJSON(l.geom)::json AS geometry,
-        l.created_at AS "createdAt",
-        l.updated_at AS "updatedAt"
-      FROM locations l
-      WHERE l.workspace_id = ${workspaceId}
-        AND l.geom && ST_MakeEnvelope(
-          ${bbox.west},
-          ${bbox.south},
-          ${bbox.east},
-          ${bbox.north},
-          4326
-        )
-      ORDER BY l.name ASC
-    `
-  }
-
-  // Return all locations for the workspace when no bbox is provided.
+  // Filter by envelope when bbox is provided; otherwise return all workspace locations.
   return await sql<LocationRow[]>`
-    SELECT
-      l.id,
-      l.workspace_id AS "workspaceId",
-      l.name,
-      l.address,
-      l.location_type AS "locationType",
-      ST_AsGeoJSON(l.geom)::json AS geometry,
-      l.created_at AS "createdAt",
-      l.updated_at AS "updatedAt"
+    SELECT ${sql.unsafe(locationColumns)}
     FROM locations l
     WHERE l.workspace_id = ${workspaceId}
+      ${
+        bbox
+          ? sql`AND l.geom && ST_MakeEnvelope(${bbox.west}, ${bbox.south}, ${bbox.east}, ${bbox.north}, 4326)`
+          : sql``
+      }
     ORDER BY l.name ASC
   `
 }
@@ -104,15 +66,7 @@ export async function getLocationById(
   locationId: string,
 ): Promise<LocationRow | null> {
   const rows = await sql<LocationRow[]>`
-    SELECT
-      l.id,
-      l.workspace_id AS "workspaceId",
-      l.name,
-      l.address,
-      l.location_type AS "locationType",
-      ST_AsGeoJSON(l.geom)::json AS geometry,
-      l.created_at AS "createdAt",
-      l.updated_at AS "updatedAt"
+    SELECT ${sql.unsafe(locationColumns)}
     FROM locations l
     WHERE l.workspace_id = ${workspaceId}
       AND l.id = ${locationId}

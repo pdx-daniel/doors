@@ -29,16 +29,7 @@ export function AppShell(): ReactElement {
   const [activeRoute, setActiveRoute] = useState<RootTabRouteName>('Map')
 
   const handleTabBarChange = useCallback((props: BottomTabBarProps): void => {
-    setTabBarProps(previous => {
-      const previousKey = previous ? `${previous.state.key}:${previous.state.index}` : null
-      const nextKey = `${props.state.key}:${props.state.index}`
-
-      if (previousKey === nextKey) {
-        return previous
-      }
-
-      return props
-    })
+    setTabBarProps(props)
   }, [])
 
   const syncActiveRoute = useCallback(

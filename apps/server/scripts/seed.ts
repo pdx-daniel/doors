@@ -6,9 +6,6 @@ import {createLocation} from '../src/db/repos/locationRepo'
 import {createPerson, createPersonAlias} from '../src/db/repos/personRepo'
 import {createWorkspace} from '../src/db/repos/workspaceRepo'
 
-/** Fixed UUID for the seeded personal workspace. */
-const DEV_PERSONAL_WORKSPACE_ID = '01900000-0000-7000-8000-000000000002'
-
 /** Portland-area venues used as anchors for seeded people. */
 const PORTLAND_VENUES = [
   {
@@ -236,10 +233,10 @@ function offsetCoordinates(venue: Venue, personIndex: number): {lng: number; lat
  * Clears previously seeded dev workspace rows so reseeds stay repeatable.
  */
 async function clearDevData(sql: ReturnType<typeof getSql>): Promise<void> {
-  await sql`DELETE FROM person_aliases WHERE workspace_id IN (${DEV_WORKSPACE_ID}, ${DEV_PERSONAL_WORKSPACE_ID})`
-  await sql`DELETE FROM people WHERE workspace_id IN (${DEV_WORKSPACE_ID}, ${DEV_PERSONAL_WORKSPACE_ID})`
+  await sql`DELETE FROM person_aliases WHERE workspace_id = ${DEV_WORKSPACE_ID}`
+  await sql`DELETE FROM people WHERE workspace_id = ${DEV_WORKSPACE_ID}`
   await sql`DELETE FROM locations WHERE workspace_id = ${DEV_WORKSPACE_ID}`
-  await sql`DELETE FROM workspaces WHERE id IN (${DEV_WORKSPACE_ID}, ${DEV_PERSONAL_WORKSPACE_ID})`
+  await sql`DELETE FROM workspaces WHERE id = ${DEV_WORKSPACE_ID}`
 }
 
 /**
@@ -250,16 +247,11 @@ async function seed(): Promise<void> {
 
   await clearDevData(sql)
 
-  // Create org and personal workspaces used by local development clients.
+  // Create the org workspace used by local development clients.
   await createWorkspace(sql, {
     id: DEV_WORKSPACE_ID,
     kind: 'org',
     name: 'Doors Dev',
-  })
-  await createWorkspace(sql, {
-    id: DEV_PERSONAL_WORKSPACE_ID,
-    kind: 'personal',
-    name: 'Dev Personal',
   })
 
   const venueLocationIds: string[] = []

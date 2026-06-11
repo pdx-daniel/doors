@@ -1,13 +1,5 @@
-import type postgres from 'postgres'
-import {uuidv7} from 'uuidv7'
-
-/** postgres.js client type alias used by repository modules. */
-export type SqlClient = ReturnType<typeof postgres>
-
-/** Generates a time-sortable UUID v7 string. */
-export function newId(): string {
-  return uuidv7()
-}
+import {newId} from '../../lib/id'
+import type {SqlClient} from '../client'
 
 /** Supported workspace kinds. */
 export type WorkspaceKind = 'personal' | 'org'

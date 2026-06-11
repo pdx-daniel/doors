@@ -3,13 +3,12 @@ import {useEffect, useState} from 'react'
 import {StatusBar} from 'react-native'
 import {SafeAreaProvider} from 'react-native-safe-area-context'
 
-import type {ApiHealthStatus} from './src/hooks/useApiHealth'
-import {useApiHealth} from './src/hooks/useApiHealth'
-import {useMapAppearance} from './src/hooks/useMapAppearance'
 import {AppShell} from '@/components/AppShell'
 import {Box} from '@/components/ui/box'
 import {GluestackUIProvider} from '@/components/ui/gluestack-ui-provider'
 import {Text} from '@/components/ui/text'
+import {ApiHealthProvider, type ApiHealthStatus, useApiHealth} from '@/contexts/ApiHealthContext'
+import {useMapAppearance} from '@/hooks/useMapAppearance'
 
 import './global.css'
 
@@ -18,12 +17,20 @@ import './global.css'
  * Renders the map even when the backend is unreachable.
  */
 export default function App(): ReactElement {
+  return (
+    <ApiHealthProvider>
+      <AppContent />
+    </ApiHealthProvider>
+  )
+}
+
+/** Inner app content that reads shared API health from context. */
+function AppContent(): ReactElement {
   const healthStatus = useApiHealth()
   const appearance = useMapAppearance()
   const [bannerVisible, setBannerVisible] = useState(true)
 
   useEffect(() => {
-    // Hide the offline banner after a few seconds so it does not obscure the map.
     if (healthStatus !== 'offline') {
       return
     }
@@ -40,7 +47,7 @@ export default function App(): ReactElement {
   const showBanner = bannerVisible && (healthStatus === 'checking' || healthStatus === 'offline')
 
   return (
-    <GluestackUIProvider mode="light">
+    <GluestackUIProvider mode={appearance}>
       <SafeAreaProvider>
         <Box className="flex-1 web:min-h-full">
           <StatusBar barStyle={appearance === 'dark' ? 'light-content' : 'dark-content'} />

@@ -12,10 +12,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@babel/runtime": "^7.25.0",
     "@elysiajs/eden": "catalog:"
   },
   "devDependencies": {
+    "@doors/server": "workspace:*",
     "elysia": "catalog:",
     "typescript": "^5.8.3"
   }

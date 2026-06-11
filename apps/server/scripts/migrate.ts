@@ -2,7 +2,7 @@ import {readdirSync, readFileSync} from 'node:fs'
 import {dirname, join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
-import {getSql} from '../src/db/client'
+import {closeSql, getSql} from '../src/db/client'
 
 const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), '../migrations')
 
@@ -45,7 +45,7 @@ async function migrate(): Promise<void> {
     console.log(`applied migration ${file}`)
   }
 
-  await sql.end()
+  await closeSql()
 }
 
 await migrate()

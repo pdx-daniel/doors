@@ -1,13 +1,16 @@
 import postgres from 'postgres'
 
+/** postgres.js client type alias used by repository modules. */
+export type SqlClient = ReturnType<typeof postgres>
+
 /** Shared postgres.js client configured from DATABASE_URL. */
-let sqlInstance: ReturnType<typeof postgres> | undefined
+let sqlInstance: SqlClient | undefined
 
 /**
  * Returns a singleton postgres.js client.
  * @throws When DATABASE_URL is not set.
  */
-export function getSql(): ReturnType<typeof postgres> {
+export function getSql(): SqlClient {
   if (sqlInstance) {
     return sqlInstance
   }

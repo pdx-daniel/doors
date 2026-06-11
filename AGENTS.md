@@ -60,5 +60,5 @@ bun run typecheck     # TypeScript across workspaces
 ## Database (local dev)
 
 1. Copy `.env.example` to `.env` and run `bun run db:up`.
-2. Run `bun run db:migrate` then `bun run db:seed` (or `bun run db:reset` to wipe and reseed).
+2. Run `bun run db:migrate` then `bun run db:seed` (or `bun run db:reseed` to clear and reseed dev data).
 3. API routes under `/v1/*` require the `X-Workspace-Id` header. The seeded org workspace id is exported as `DEV_WORKSPACE_ID` from `@doors/api` (also set automatically on the Eden client).

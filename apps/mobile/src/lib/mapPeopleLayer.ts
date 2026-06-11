@@ -1,3 +1,4 @@
+import type {GeoJsonFeatureCollection} from '@doors/api/schemas'
 import type {
   CircleLayerSpecification,
   FilterSpecification,
@@ -29,10 +30,10 @@ export const PEOPLE_DOT_RADIUS = 6
 export const PEOPLE_CLUSTER_MAX_RADIUS = 28
 
 /** Empty GeoJSON collection used before the first successful fetch. */
-export const EMPTY_FEATURE_COLLECTION = {
+export const EMPTY_FEATURE_COLLECTION: GeoJsonFeatureCollection = {
   type: 'FeatureCollection',
   features: [],
-} as const
+}
 
 type PeopleCirclePaint = NonNullable<CircleLayerSpecification['paint']>
 type PeopleCountLayout = NonNullable<SymbolLayerSpecification['layout']>

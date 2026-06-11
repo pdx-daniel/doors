@@ -1,16 +1,16 @@
 import type {App} from '@doors/server'
 import {treaty} from '@elysiajs/eden'
 
-import {DEV_WORKSPACE_ID, WORKSPACE_ID_HEADER} from './constants'
+import {DEFAULT_API_URL, DEV_WORKSPACE_ID, WORKSPACE_ID_HEADER} from './constants'
 
-/** Default API origin for local development. */
-const defaultBaseUrl = 'http://localhost:3000'
+/** Eden Treaty client type for the doors API. */
+export type ApiClient = ReturnType<typeof treaty<App>>
 
 /**
  * Creates a type-safe Eden Treaty client for the doors API.
  * @param baseUrl - API origin (no trailing slash).
  */
-export function createApiClient(baseUrl: string = defaultBaseUrl): ReturnType<typeof treaty<App>> {
+function createApiClient(baseUrl: string = DEFAULT_API_URL): ApiClient {
   return treaty<App>(baseUrl, {
     headers: {
       [WORKSPACE_ID_HEADER]: DEV_WORKSPACE_ID,
@@ -18,11 +18,11 @@ export function createApiClient(baseUrl: string = defaultBaseUrl): ReturnType<ty
   })
 }
 
-// Resolve the API base URL from the environment when available.
+// Resolve the API base URL from the environment when available (web webpack DefinePlugin).
 const resolvedBaseUrl =
   typeof process !== 'undefined' && process.env.DOORS_API_URL
     ? process.env.DOORS_API_URL
-    : defaultBaseUrl
+    : DEFAULT_API_URL
 
 /** Shared Eden client instance used by the mobile app. */
 export const api = createApiClient(resolvedBaseUrl)

@@ -72,6 +72,7 @@ module.exports = {
       template: path.join(appRoot, 'public/index.html'),
     }),
     new webpack.DefinePlugin({
+      // Fallback must match packages/api/src/constants.ts DEFAULT_API_URL.
       'process.env.DOORS_API_URL': JSON.stringify(
         process.env.DOORS_API_URL ?? 'http://localhost:3000',
       ),

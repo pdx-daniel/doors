@@ -3,3 +3,6 @@ export const DEV_WORKSPACE_ID = '01900000-0000-7000-8000-000000000001'
 
 /** HTTP header used to scope API requests to a workspace (dev tenancy). */
 export const WORKSPACE_ID_HEADER = 'x-workspace-id'
+
+/** Default API origin for local development. */
+export const DEFAULT_API_URL = 'http://localhost:3000'

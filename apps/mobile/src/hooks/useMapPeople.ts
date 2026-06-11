@@ -2,29 +2,17 @@ import {api} from '@doors/api'
 import type {GeoJsonFeatureCollection, MapViewport} from '@doors/api/schemas'
 import {useEffect, useRef, useState} from 'react'
 
-/** Fetch lifecycle for map people GeoJSON data. */
-export type MapPeopleStatus = 'idle' | 'loading' | 'ready' | 'error'
-
-/** Result of the map people fetch hook. */
-export type MapPeopleState = {
-  data: GeoJsonFeatureCollection
-  status: MapPeopleStatus
-}
-
-const emptyCollection: GeoJsonFeatureCollection = {
-  type: 'FeatureCollection',
-  features: [],
-}
+import {EMPTY_FEATURE_COLLECTION} from '@/lib/mapPeopleLayer'
 
 /**
  * Debounced fetch hook for people GeoJSON in the current map viewport.
- * Never throws — network failures resolve to an empty collection and `error` status.
+ * Never throws — network failures resolve to an empty collection.
  */
-export function useMapPeople(viewport: MapViewport | null, enabled: boolean): MapPeopleState {
-  const [state, setState] = useState<MapPeopleState>({
-    data: emptyCollection,
-    status: 'idle',
-  })
+export function useMapPeople(
+  viewport: MapViewport | null,
+  enabled: boolean,
+): {data: GeoJsonFeatureCollection} {
+  const [data, setData] = useState<GeoJsonFeatureCollection>(EMPTY_FEATURE_COLLECTION)
   const requestIdRef = useRef(0)
 
   useEffect(() => {
@@ -38,13 +26,10 @@ export function useMapPeople(viewport: MapViewport | null, enabled: boolean): Ma
 
     const timer = setTimeout(() => {
       void (async (): Promise<void> => {
-        setState(current => ({...current, status: 'loading'}))
-
         try {
           const bbox = [viewport.west, viewport.south, viewport.east, viewport.north].join(',')
 
-          // Request clustered or raw points for the current viewport and zoom.
-          const {data, error} = await api.v1.map.people.get({
+          const {data: response, error} = await api.v1.map.people.get({
             query: {
               bbox,
               zoom: viewport.zoom,
@@ -52,23 +37,27 @@ export function useMapPeople(viewport: MapViewport | null, enabled: boolean): Ma
             },
           })
 
-          // Ignore responses from an older viewport request.
           if (requestIdRef.current !== requestId) {
             return
           }
 
-          if (error || !data || !('type' in data) || data.type !== 'FeatureCollection') {
-            setState({data: emptyCollection, status: 'error'})
+          if (
+            error ||
+            !response ||
+            !('type' in response) ||
+            response.type !== 'FeatureCollection'
+          ) {
+            setData(EMPTY_FEATURE_COLLECTION)
             return
           }
 
-          setState({data, status: 'ready'})
+          setData(response)
         } catch {
           if (requestIdRef.current !== requestId) {
             return
           }
 
-          setState({data: emptyCollection, status: 'error'})
+          setData(EMPTY_FEATURE_COLLECTION)
         }
       })()
     }, 250)
@@ -78,5 +67,5 @@ export function useMapPeople(viewport: MapViewport | null, enabled: boolean): Ma
     }
   }, [enabled, viewport])
 
-  return state
+  return {data}
 }

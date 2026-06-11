@@ -1,6 +1,7 @@
 import type {LinkingOptions} from '@react-navigation/native'
 
-import type {RootTabRouteName} from './routes'
+import {ROOT_TABS, type RootTabRouteName} from './routes'
+import {WEB_DEV_SERVER_ORIGIN} from '@/constants/map'
 
 /** Param list for the root bottom-tab navigator. */
 export type RootTabParamList = Record<RootTabRouteName, undefined>
@@ -11,8 +12,13 @@ function getWebPrefix(): string {
     return window.location.origin
   }
 
-  return 'http://localhost:3001'
+  return WEB_DEV_SERVER_ORIGIN
 }
+
+/** Screen paths derived from root tab definitions. */
+const rootTabScreens = Object.fromEntries(
+  ROOT_TABS.map(tab => [tab.name, tab.path]),
+) as LinkingOptions<RootTabParamList>['config'] extends {screens: infer Screens} ? Screens : never
 
 /**
  * React Navigation linking config for web URL sync.
@@ -21,14 +27,6 @@ function getWebPrefix(): string {
 export const linking: LinkingOptions<RootTabParamList> = {
   prefixes: [getWebPrefix()],
   config: {
-    screens: {
-      // Route keys must match RootNavigator screen names (PascalCase).
-      // biome-ignore lint/style/useNamingConvention: React Navigation screen names
-      Map: '',
-      // biome-ignore lint/style/useNamingConvention: React Navigation screen names
-      Dummy1: 'dummy-1',
-      // biome-ignore lint/style/useNamingConvention: React Navigation screen names
-      Settings: 'settings',
-    },
+    screens: rootTabScreens,
   },
 }

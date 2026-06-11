@@ -1,19 +1,18 @@
+import type {PersonResource} from '@doors/api/schemas'
 import type postgres from 'postgres'
 
-import type {SqlClient} from '../repos/workspaceRepo'
-import {newId} from '../repos/workspaceRepo'
+import {newId} from '../../lib/id'
+import type {SqlClient} from '../client'
 
 /** Person row returned from the database. */
-export type PersonRow = {
-  id: string
-  workspaceId: string
-  displayName: string
-  email: string
-  phone: string
-  locationId: string | null
-  metadata: Record<string, unknown>
-  createdAt: string
-  updatedAt: string
+export type PersonRow = PersonResource
+
+/** Thrown when a person references a location outside their workspace. */
+export class LocationWorkspaceMismatchError extends Error {
+  constructor() {
+    super('Location does not belong to workspace')
+    this.name = 'LocationWorkspaceMismatchError'
+  }
 }
 
 /** Input for creating a person. */
@@ -34,6 +33,31 @@ export type UpdatePersonInput = {
   phone?: string
   locationId?: string | null
   metadata?: Record<string, unknown>
+}
+
+/**
+ * Verifies that a location id belongs to the given workspace.
+ */
+async function assertLocationInWorkspace(
+  sql: SqlClient,
+  workspaceId: string,
+  locationId: string | null,
+): Promise<void> {
+  if (locationId === null) {
+    return
+  }
+
+  const rows = await sql<{ok: number}[]>`
+    SELECT 1 AS ok
+    FROM locations
+    WHERE id = ${locationId}
+      AND workspace_id = ${workspaceId}
+    LIMIT 1
+  `
+
+  if (!rows[0]) {
+    throw new LocationWorkspaceMismatchError()
+  }
 }
 
 /**
@@ -95,6 +119,8 @@ export async function createPerson(sql: SqlClient, input: CreatePersonInput): Pr
   const metadata = input.metadata ?? {}
   const locationId = input.locationId ?? null
 
+  await assertLocationInWorkspace(sql, input.workspaceId, locationId)
+
   // Insert the person with JSON metadata stored in jsonb.
   const rows = await sql<PersonRow[]>`
     INSERT INTO people (
@@ -155,6 +181,8 @@ export async function updatePerson(
   const locationId = input.locationId === undefined ? existing.locationId : input.locationId
   const metadata = input.metadata ?? existing.metadata
 
+  await assertLocationInWorkspace(sql, workspaceId, locationId)
+
   // Apply merged values and refresh updated_at.
   const rows = await sql<PersonRow[]>`
     UPDATE people
@@ -201,7 +229,7 @@ export async function deletePerson(
 }
 
 /**
- * Inserts an external id alias for a person.
+ * Inserts an external id alias for a person (seed-only until routes exist).
  */
 export async function createPersonAlias(
   sql: SqlClient,

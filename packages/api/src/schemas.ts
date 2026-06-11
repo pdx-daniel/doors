@@ -10,6 +10,21 @@ export type HistogramResponse = {
   buckets: HistogramBucket[]
 }
 
+/** Bounding box in WGS84 decimal degrees. */
+export type Bbox = {
+  west: number
+  south: number
+  east: number
+  north: number
+}
+
+/** Radius filter centered on a WGS84 point. */
+export type RadiusFilter = {
+  lng: number
+  lat: number
+  meters: number
+}
+
 /** GeoJSON Point geometry. */
 export type GeoJsonPoint = {
   type: 'Point'
@@ -84,10 +99,6 @@ export type PersonResource = {
 }
 
 /** Map viewport bounds sent from the client. */
-export type MapViewport = {
-  west: number
-  south: number
-  east: number
-  north: number
+export type MapViewport = Bbox & {
   zoom: number
 }
