@@ -1,6 +1,6 @@
 import type {MapClusterProperties, MapPersonProperties} from '@doors/api/schemas'
 
-/** Logs person or cluster metadata when a map dot is pressed. */
+/** Logs person, stack, or cluster metadata when a map dot is pressed. */
 export function logMapPersonFeature(properties: unknown): void {
   if (!properties || typeof properties !== 'object') {
     return
@@ -8,7 +8,7 @@ export function logMapPersonFeature(properties: unknown): void {
 
   const props = properties as MapClusterProperties | MapPersonProperties
 
-  // Log cluster bubbles with aggregate counts.
+  // Log geohash clusters with aggregate counts.
   if ('cluster' in props && props.cluster === true) {
     console.log('[map] cluster', {
       count: props.count,
@@ -17,15 +17,29 @@ export function logMapPersonFeature(properties: unknown): void {
     return
   }
 
+  const personProps = props as MapPersonProperties
+
+  // Log co-located stacks that share a map dot.
+  if (personProps.stacked && personProps.count > 1) {
+    console.log('[map] stack', {
+      count: personProps.count,
+      locationId: personProps.locationId,
+      locationName: personProps.locationName,
+      locationType: personProps.locationType,
+      representative: personProps.displayName,
+    })
+    return
+  }
+
   // Log individual person and location fields for debugging.
   console.log('[map] person', {
-    personId: props.personId,
-    displayName: props.displayName,
-    email: props.email,
-    phone: props.phone,
-    locationId: props.locationId,
-    locationName: props.locationName,
-    locationType: props.locationType,
-    metadata: props.metadata,
+    personId: personProps.personId,
+    displayName: personProps.displayName,
+    email: personProps.email,
+    phone: personProps.phone,
+    locationId: personProps.locationId,
+    locationName: personProps.locationName,
+    locationType: personProps.locationType,
+    metadata: personProps.metadata,
   })
 }

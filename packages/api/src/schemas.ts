@@ -25,6 +25,7 @@ export type GeoJsonGeometry = {
 /** GeoJSON Feature properties for clustered map points. */
 export type MapClusterProperties = {
   cluster: true
+  stacked: false
   count: number
   geohash: string
 }
@@ -32,6 +33,8 @@ export type MapClusterProperties = {
 /** GeoJSON Feature properties for individual person map points. */
 export type MapPersonProperties = {
   cluster: false
+  stacked: boolean
+  count: number
   personId: string
   displayName: string
   email: string

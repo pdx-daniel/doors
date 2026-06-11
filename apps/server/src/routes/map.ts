@@ -2,9 +2,14 @@ import {Elysia, t} from 'elysia'
 
 import {getSql} from '../db/client'
 import type {MapPeopleFilters} from '../db/geo/mapFilters'
-import {geohashPrecisionForZoom} from '../db/geo/mapFilters'
-import {queryPeopleMapBuckets, queryPeoplePoints} from '../db/repos/mapQueryRepo'
-import {mapBucketsToGeoJson, peoplePointsToGeoJson} from '../lib/geoJson'
+import {
+  geohashPrecisionForZoom,
+  latitudeFromBbox,
+  mergeOverlappingMapBuckets,
+  snapGridSizeForZoom,
+} from '../db/geo/mapFilters'
+import {queryPeopleMapBuckets, queryPeopleVisualGroups} from '../db/repos/mapQueryRepo'
+import {mapBucketsToGeoJson} from '../lib/geoJson'
 import {missingWorkspaceResponse, readWorkspaceId} from '../middleware/workspace'
 
 /**
@@ -100,15 +105,23 @@ export const mapRoutes = new Elysia({prefix: '/map'}).get(
     const clusterMode = query.cluster ?? 'auto'
     const precision = clusterMode === 'false' ? null : geohashPrecisionForZoom(Number(zoom))
 
-    // Return individual points when clustering is disabled or zoom is high enough.
+    const latitude = latitudeFromBbox(filters.bbox)
+    const numericZoom = Number(zoom)
+
+    // Group visually overlapping dots when clustering is disabled or zoom is high enough.
     if (precision === null || clusterMode === 'false') {
-      const rows = await queryPeoplePoints(sql, filters)
-      return peoplePointsToGeoJson(rows)
+      const gridSize = snapGridSizeForZoom(numericZoom, latitude)
+      const rows = await queryPeopleVisualGroups(sql, filters, gridSize)
+      const mergedRows = mergeOverlappingMapBuckets(rows, numericZoom, latitude, 'stack')
+
+      return mapBucketsToGeoJson(mergedRows, 'stack')
     }
 
     // Aggregate into geohash buckets for low-zoom map views.
     const rows = await queryPeopleMapBuckets(sql, filters, precision)
-    return mapBucketsToGeoJson(rows)
+    const mergedRows = mergeOverlappingMapBuckets(rows, numericZoom, latitude, 'cluster')
+
+    return mapBucketsToGeoJson(mergedRows, 'cluster')
   },
   {
     query: t.Object({

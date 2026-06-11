@@ -24,14 +24,8 @@ export async function queryPeopleMapBuckets(
     SELECT
       ST_GeoHash(l.geom, ${precision}) AS geohash,
       COUNT(*)::int AS count,
-      CASE
-        WHEN COUNT(*) > 1 THEN ST_X(ST_Centroid(ST_Collect(l.geom)))
-        ELSE ST_X(ST_Collect(l.geom))
-      END AS lng,
-      CASE
-        WHEN COUNT(*) > 1 THEN ST_Y(ST_Centroid(ST_Collect(l.geom)))
-        ELSE ST_Y(ST_Collect(l.geom))
-      END AS lat,
+      ST_X(ST_Centroid(ST_Collect(l.geom))) AS lng,
+      ST_Y(ST_Centroid(ST_Collect(l.geom))) AS lat,
       (array_agg(p.id ORDER BY p.id))[1] AS "personId",
       (array_agg(p.display_name ORDER BY p.id))[1] AS "displayName",
       (array_agg(p.email ORDER BY p.id))[1] AS email,
@@ -65,6 +59,45 @@ export async function queryPeopleClusters(
 
   // Keep the legacy cluster-only shape for callers that still expect it.
   return buckets.filter(bucket => bucket.count > 1)
+}
+
+/**
+ * Queries zoom-aware visual groups for high-zoom map rendering.
+ * Groups exact and nearly-overlapping coordinates using a snap grid.
+ */
+export async function queryPeopleVisualGroups(
+  sql: SqlClient,
+  filters: MapPeopleFilters,
+  gridSize: number,
+): Promise<MapBucketRow[]> {
+  const {geoSql, searchSql, locationTypeSql, jsonPathSql} = buildMapFilterFragments(filters)
+
+  // Bucket by snapped coordinates so co-located and overlapping dots merge.
+  return await sql.unsafe<MapBucketRow[]>(`
+    SELECT
+      ST_AsText(ST_SnapToGrid(l.geom, ${gridSize})) AS geohash,
+      COUNT(*)::int AS count,
+      ST_X(ST_Centroid(ST_Collect(l.geom))) AS lng,
+      ST_Y(ST_Centroid(ST_Collect(l.geom))) AS lat,
+      (array_agg(p.id ORDER BY p.id))[1] AS "personId",
+      (array_agg(p.display_name ORDER BY p.id))[1] AS "displayName",
+      (array_agg(p.email ORDER BY p.id))[1] AS email,
+      (array_agg(p.phone ORDER BY p.id))[1] AS phone,
+      (array_agg(l.id ORDER BY p.id))[1] AS "locationId",
+      (array_agg(l.name ORDER BY p.id))[1] AS "locationName",
+      (array_agg(l.location_type ORDER BY p.id))[1] AS "locationType",
+      (array_agg(p.metadata ORDER BY p.id))[1] AS metadata
+    FROM people p
+    INNER JOIN locations l ON l.id = p.location_id
+    WHERE p.workspace_id = '${filters.workspaceId}'
+      AND p.location_id IS NOT NULL
+      AND ${geoSql}
+      AND ${searchSql}
+      AND ${locationTypeSql}
+      AND ${jsonPathSql}
+    GROUP BY ST_SnapToGrid(l.geom, ${gridSize})
+    ORDER BY count DESC
+  `)
 }
 
 /**

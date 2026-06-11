@@ -19,31 +19,14 @@ import {buildBasemapStyle} from '../lib/basemapStyle'
 import {logMapPersonFeature} from '../lib/logMapPersonFeature'
 import {
   PEOPLE_CIRCLE_LAYER_ID,
-  PEOPLE_CLUSTER_COLOR,
-  PEOPLE_CLUSTER_MAX_RADIUS,
-  PEOPLE_DOT_COLOR,
-  PEOPLE_DOT_RADIUS,
+  PEOPLE_COUNT_LAYER_ID,
   PEOPLE_SOURCE_ID,
+  peopleCirclePaint,
+  peopleCountFilter,
+  peopleCountLayout,
+  peopleCountPaint,
 } from '../lib/mapPeopleLayer'
 import {registerPmtilesProtocol} from '../lib/registerPmtilesProtocol'
-
-/** Paint definition for people dots and cluster bubbles. */
-const peopleLayerPaint: maplibregl.CircleLayerSpecification['paint'] = {
-  'circle-radius': [
-    'case',
-    ['==', ['get', 'cluster'], true],
-    ['interpolate', ['linear'], ['get', 'count'], 1, 12, 100, PEOPLE_CLUSTER_MAX_RADIUS],
-    PEOPLE_DOT_RADIUS,
-  ],
-  'circle-color': [
-    'case',
-    ['==', ['get', 'cluster'], true],
-    PEOPLE_CLUSTER_COLOR,
-    PEOPLE_DOT_COLOR,
-  ],
-  'circle-stroke-width': 1,
-  'circle-stroke-color': '#ffffff',
-}
 
 /**
  * Web map renderer backed by maplibre-gl v5.
@@ -80,7 +63,7 @@ export function MapView(): ReactElement {
     (map: maplibregl.Map): void => {
       const existingSource = map.getSource(PEOPLE_SOURCE_ID)
 
-      // Create the GeoJSON source and circle layer on first use.
+      // Create the GeoJSON source and map layers on first use.
       if (!existingSource) {
         map.addSource(PEOPLE_SOURCE_ID, {
           type: 'geojson',
@@ -90,7 +73,15 @@ export function MapView(): ReactElement {
           id: PEOPLE_CIRCLE_LAYER_ID,
           type: 'circle',
           source: PEOPLE_SOURCE_ID,
-          paint: peopleLayerPaint,
+          paint: peopleCirclePaint,
+        } as maplibregl.AddLayerObject)
+        map.addLayer({
+          id: PEOPLE_COUNT_LAYER_ID,
+          type: 'symbol',
+          source: PEOPLE_SOURCE_ID,
+          filter: peopleCountFilter,
+          layout: peopleCountLayout,
+          paint: peopleCountPaint,
         } as maplibregl.AddLayerObject)
         return
       }
@@ -151,10 +142,10 @@ export function MapView(): ReactElement {
       syncViewport(map)
     })
 
-    // Log person or cluster metadata when a dot is clicked.
+    // Log person, stack, or cluster metadata when a dot is clicked.
     map.on('click', event => {
       const features = map.queryRenderedFeatures(event.point, {
-        layers: [PEOPLE_CIRCLE_LAYER_ID],
+        layers: [PEOPLE_CIRCLE_LAYER_ID, PEOPLE_COUNT_LAYER_ID],
       })
       const feature = features[0]
       if (feature?.properties) {

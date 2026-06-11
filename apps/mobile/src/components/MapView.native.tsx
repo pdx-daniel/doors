@@ -25,11 +25,12 @@ import {buildBasemapStyle} from '../lib/basemapStyle'
 import {logMapPersonFeature} from '../lib/logMapPersonFeature'
 import {
   PEOPLE_CIRCLE_LAYER_ID,
-  PEOPLE_CLUSTER_COLOR,
-  PEOPLE_CLUSTER_MAX_RADIUS,
-  PEOPLE_DOT_COLOR,
-  PEOPLE_DOT_RADIUS,
+  PEOPLE_COUNT_LAYER_ID,
   PEOPLE_SOURCE_ID,
+  peopleCirclePaint,
+  peopleCountFilter,
+  peopleCountLayout,
+  peopleCountPaint,
 } from '../lib/mapPeopleLayer'
 
 /**
@@ -101,30 +102,15 @@ export function MapView(): ReactElement {
               id={PEOPLE_CIRCLE_LAYER_ID}
               source={PEOPLE_SOURCE_ID}
               type="circle"
-              paint={{
-                'circle-color': [
-                  'case',
-                  ['==', ['get', 'cluster'], true],
-                  PEOPLE_CLUSTER_COLOR,
-                  PEOPLE_DOT_COLOR,
-                ],
-                'circle-radius': [
-                  'case',
-                  ['==', ['get', 'cluster'], true],
-                  [
-                    'interpolate',
-                    ['linear'],
-                    ['get', 'count'],
-                    1,
-                    12,
-                    100,
-                    PEOPLE_CLUSTER_MAX_RADIUS,
-                  ],
-                  PEOPLE_DOT_RADIUS,
-                ],
-                'circle-stroke-color': '#ffffff',
-                'circle-stroke-width': 1,
-              }}
+              paint={peopleCirclePaint}
+            />
+            <Layer
+              filter={peopleCountFilter}
+              id={PEOPLE_COUNT_LAYER_ID}
+              layout={peopleCountLayout}
+              paint={peopleCountPaint}
+              source={PEOPLE_SOURCE_ID}
+              type="symbol"
             />
           </GeoJSONSource>
         ) : null}

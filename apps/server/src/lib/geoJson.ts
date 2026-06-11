@@ -1,6 +1,47 @@
-import type {GeoJsonFeatureCollection} from '@doors/api/schemas'
+import type {GeoJsonFeatureCollection, MapPeopleFeature} from '@doors/api/schemas'
 
 import type {ClusterRow, MapBucketRow, PersonPointRow} from '../db/geo/mapFilters'
+
+/** Builds a GeoJSON person feature from a grouped bucket row. */
+function personFeatureFromBucket(row: MapBucketRow, stacked: boolean): MapPeopleFeature {
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'Point',
+      coordinates: [row.lng, row.lat],
+    },
+    properties: {
+      cluster: false,
+      stacked,
+      count: row.count,
+      personId: row.personId ?? '',
+      displayName: row.displayName ?? '',
+      email: row.email ?? '',
+      phone: row.phone ?? '',
+      locationId: row.locationId ?? '',
+      locationName: row.locationName ?? '',
+      locationType: row.locationType ?? '',
+      metadata: row.metadata ?? {},
+    },
+  }
+}
+
+/** Builds a GeoJSON geohash cluster feature from a grouped bucket row. */
+function clusterFeatureFromBucket(row: MapBucketRow): MapPeopleFeature {
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'Point',
+      coordinates: [row.lng, row.lat],
+    },
+    properties: {
+      cluster: true,
+      stacked: false,
+      count: row.count,
+      geohash: row.geohash,
+    },
+  }
+}
 
 /** GeoJSON FeatureCollection for clustered map points. */
 export function clustersToGeoJson(rows: ClusterRow[]): GeoJsonFeatureCollection {
@@ -16,48 +57,29 @@ export function clustersToGeoJson(rows: ClusterRow[]): GeoJsonFeatureCollection 
       locationType: null,
       metadata: null,
     })),
+    'cluster',
   )
 }
 
-/** GeoJSON FeatureCollection mixing multi-person clusters and singleton person dots. */
-export function mapBucketsToGeoJson(rows: MapBucketRow[]): GeoJsonFeatureCollection {
+/**
+ * GeoJSON FeatureCollection mixing geohash clusters, co-located stacks, and singletons.
+ */
+export function mapBucketsToGeoJson(
+  rows: MapBucketRow[],
+  mode: 'cluster' | 'stack' = 'cluster',
+): GeoJsonFeatureCollection {
   return {
     type: 'FeatureCollection',
     features: rows.map(row => {
-      // Emit a person dot when a geohash cell only contains one person.
       if (row.count <= 1 && row.personId) {
-        return {
-          type: 'Feature' as const,
-          geometry: {
-            type: 'Point' as const,
-            coordinates: [row.lng, row.lat],
-          },
-          properties: {
-            cluster: false as const,
-            personId: row.personId,
-            displayName: row.displayName ?? '',
-            email: row.email ?? '',
-            phone: row.phone ?? '',
-            locationId: row.locationId ?? '',
-            locationName: row.locationName ?? '',
-            locationType: row.locationType ?? '',
-            metadata: row.metadata ?? {},
-          },
-        }
+        return personFeatureFromBucket(row, false)
       }
 
-      return {
-        type: 'Feature' as const,
-        geometry: {
-          type: 'Point' as const,
-          coordinates: [row.lng, row.lat],
-        },
-        properties: {
-          cluster: true as const,
-          count: row.count,
-          geohash: row.geohash,
-        },
+      if (mode === 'cluster') {
+        return clusterFeatureFromBucket(row)
       }
+
+      return personFeatureFromBucket(row, true)
     }),
   }
 }
@@ -74,6 +96,8 @@ export function peoplePointsToGeoJson(rows: PersonPointRow[]): GeoJsonFeatureCol
       },
       properties: {
         cluster: false,
+        stacked: false,
+        count: 1,
         personId: row.personId,
         displayName: row.displayName,
         email: row.email,

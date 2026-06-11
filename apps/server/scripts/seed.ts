@@ -9,8 +9,8 @@ import {createWorkspace} from '../src/db/repos/workspaceRepo'
 /** Fixed UUID for the seeded personal workspace. */
 const DEV_PERSONAL_WORKSPACE_ID = '01900000-0000-7000-8000-000000000002'
 
-/** Portland-area locations used by the dev seed dataset. */
-const PORTLAND_LOCATIONS = [
+/** Portland-area venues used as anchors for seeded people. */
+const PORTLAND_VENUES = [
   {
     name: 'Pearl District Office',
     address: '1005 NW Lovejoy St',
@@ -153,6 +153,9 @@ const PORTLAND_LOCATIONS = [
   },
 ] as const
 
+/** Varied headcount per venue so stacks are not uniform. */
+const PEOPLE_PER_VENUE = [1, 3, 2, 7, 1, 4, 2, 1, 6, 3, 2, 1, 5, 2, 4, 1, 3, 8, 2, 1] as const
+
 const FIRST_NAMES = [
   'Alex',
   'Jordan',
@@ -214,14 +217,38 @@ const OCCUPATIONS = [
 
 const GENDERS = ['woman', 'man', 'nonbinary', 'prefer not to say']
 
+type Venue = (typeof PORTLAND_VENUES)[number]
+
+/**
+ * Deterministic offset in degrees (~25–90 m) so some people sit near but not on a venue.
+ */
+function offsetCoordinates(venue: Venue, personIndex: number): {lng: number; lat: number} {
+  const angle = ((personIndex * 137.5) % 360) * (Math.PI / 180)
+  const distance = 0.00022 + (personIndex % 4) * 0.00006
+
+  return {
+    lng: venue.lng + Math.cos(angle) * distance,
+    lat: venue.lat + Math.sin(angle) * distance,
+  }
+}
+
+/**
+ * Clears previously seeded dev workspace rows so reseeds stay repeatable.
+ */
+async function clearDevData(sql: ReturnType<typeof getSql>): Promise<void> {
+  await sql`DELETE FROM person_aliases WHERE workspace_id IN (${DEV_WORKSPACE_ID}, ${DEV_PERSONAL_WORKSPACE_ID})`
+  await sql`DELETE FROM people WHERE workspace_id IN (${DEV_WORKSPACE_ID}, ${DEV_PERSONAL_WORKSPACE_ID})`
+  await sql`DELETE FROM locations WHERE workspace_id = ${DEV_WORKSPACE_ID}`
+  await sql`DELETE FROM workspaces WHERE id IN (${DEV_WORKSPACE_ID}, ${DEV_PERSONAL_WORKSPACE_ID})`
+}
+
 /**
  * Seeds Portland-area dev data into the database idempotently.
  */
 async function seed(): Promise<void> {
   const sql = getSql()
 
-  // Reset dev workspace rows so seed runs are repeatable locally.
-  await sql`DELETE FROM workspaces WHERE id IN (${DEV_WORKSPACE_ID}, ${DEV_PERSONAL_WORKSPACE_ID})`
+  await clearDevData(sql)
 
   // Create org and personal workspaces used by local development clients.
   await createWorkspace(sql, {
@@ -235,34 +262,64 @@ async function seed(): Promise<void> {
     name: 'Dev Personal',
   })
 
-  const locationIds: string[] = []
+  const venueLocationIds: string[] = []
 
-  // Insert Portland locations with fixed ids derived from index for stable reseeds.
-  for (const [index, location] of PORTLAND_LOCATIONS.entries()) {
+  // Insert shared venue locations with stable ids for reseeds.
+  for (const [index, venue] of PORTLAND_VENUES.entries()) {
     const id = `01900001-0000-7000-8000-${String(index + 1).padStart(12, '0')}`
     const created = await createLocation(sql, {
       id,
       workspaceId: DEV_WORKSPACE_ID,
-      name: location.name,
-      address: location.address,
-      locationType: location.type,
+      name: venue.name,
+      address: venue.address,
+      locationType: venue.type,
       geometry: {
         type: 'Point',
-        coordinates: [location.lng, location.lat],
+        coordinates: [venue.lng, venue.lat],
       },
     })
-    locationIds.push(created.id)
+    venueLocationIds.push(created.id)
   }
 
-  // Create roughly five people per location with varied demographics metadata.
   let personIndex = 0
-  for (const locationId of locationIds) {
-    for (let slot = 0; slot < 5; slot += 1) {
+  let microLocationIndex = 0
+
+  for (const [venueIndex, venue] of PORTLAND_VENUES.entries()) {
+    const peopleCount = PEOPLE_PER_VENUE[venueIndex] ?? 1
+    const sharedVenueLocationId = venueLocationIds[venueIndex]
+
+    if (!sharedVenueLocationId) {
+      continue
+    }
+
+    for (let slot = 0; slot < peopleCount; slot += 1) {
       personIndex += 1
       const firstName = FIRST_NAMES[personIndex % FIRST_NAMES.length] ?? 'Alex'
       const lastName = LAST_NAMES[(personIndex + slot) % LAST_NAMES.length] ?? 'Nguyen'
       const displayName = `${firstName} ${lastName}`
       const personId = `01900002-0000-7000-8000-${String(personIndex).padStart(12, '0')}`
+
+      // Share the venue pin for most people; give every third person their own nearby spot.
+      const usesNearbySpot = slot > 0 && personIndex % 3 === 0
+      let locationId = sharedVenueLocationId
+
+      if (usesNearbySpot) {
+        microLocationIndex += 1
+        const offset = offsetCoordinates(venue, personIndex)
+        const microLocationId = `01900003-0000-7000-8000-${String(microLocationIndex).padStart(12, '0')}`
+        const microLocation = await createLocation(sql, {
+          id: microLocationId,
+          workspaceId: DEV_WORKSPACE_ID,
+          name: `${venue.name} — ${firstName}`,
+          address: venue.address,
+          locationType: venue.type,
+          geometry: {
+            type: 'Point',
+            coordinates: [offset.lng, offset.lat],
+          },
+        })
+        locationId = microLocation.id
+      }
 
       const person = await createPerson(sql, {
         id: personId,
@@ -292,7 +349,9 @@ async function seed(): Promise<void> {
   }
 
   await closeSql()
-  console.log(`seeded ${locationIds.length} locations and ${personIndex} people`)
+  console.log(
+    `seeded ${PORTLAND_VENUES.length} venues, ${microLocationIndex} nearby spots, and ${personIndex} people`,
+  )
 }
 
 await seed()
