@@ -1,7 +1,7 @@
 import type {Bbox, RadiusFilter} from '@doors/api/geo/bbox'
 import type {MapFilterQuery} from '@doors/api/validators/mapQuery'
 
-import type {MapPeopleFilters} from '../db/geo/mapFilters'
+import type {MapPeopleFilters, PolygonMode} from '../db/geo/mapFilters'
 
 /**
  * Parses comma-separated bbox query param into numeric bounds.
@@ -90,8 +90,20 @@ export function buildMapPeopleFilters(
     bbox: parseBbox(query.bbox),
     radius: parseRadius(query.radius),
     polygonGeoJson: query.polygon,
+    polygonMode: parsePolygonMode(query.polygonMode),
     locationType: parseLocationTypeFilter(query.filter),
     query: query.q,
     jsonPath: query.jsonpath,
   }
+}
+
+/**
+ * Parses polygonMode query param; defaults to union when omitted.
+ */
+export function parsePolygonMode(raw: string | undefined): PolygonMode {
+  if (raw === 'intersection') {
+    return 'intersection'
+  }
+
+  return 'union'
 }

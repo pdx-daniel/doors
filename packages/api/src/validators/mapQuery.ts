@@ -5,6 +5,7 @@ export const mapFilterQuerySchema = t.Object({
   bbox: t.Optional(t.String()),
   radius: t.Optional(t.String()),
   polygon: t.Optional(t.String()),
+  polygonMode: t.Optional(t.Union([t.Literal('union'), t.Literal('intersection')])),
   q: t.Optional(t.String()),
   filter: t.Optional(t.String()),
   jsonpath: t.Optional(t.String()),

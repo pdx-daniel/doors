@@ -13,11 +13,13 @@
     "./entities/location": "./src/entities/location.ts",
     "./entities/person": "./src/entities/person.ts",
     "./entities/personLink": "./src/entities/personLink.ts",
+    "./entities/turf": "./src/entities/turf.ts",
     "./validators/location": "./src/validators/location.ts",
     "./validators/person": "./src/validators/person.ts",
     "./validators/mapQuery": "./src/validators/mapQuery.ts",
     "./validators/mapPeople": "./src/validators/mapPeople.ts",
     "./validators/stats": "./src/validators/stats.ts",
+    "./validators/turf": "./src/validators/turf.ts",
     "./stats/histogram": "./src/stats/histogram.ts"
   },
   "scripts": {

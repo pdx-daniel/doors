@@ -12,7 +12,9 @@ import {
   getBasemapPmtilesUrl,
   getRemoteFallbackStyleUrl,
 } from '@/constants/map'
+import {useTurfContext} from '@/contexts/TurfContext'
 import {useMapViewModel} from '@/hooks/useMapViewModel'
+import {useTurfMapWeb} from '@/hooks/useTurfMapWeb'
 import {buildBasemapStyle} from '@/lib/basemapStyle'
 import {
   PEOPLE_CIRCLE_LAYER_ID,
@@ -60,15 +62,20 @@ function isBasemapLoadError(event: maplibregl.ErrorEvent): boolean {
 export function MapView(): ReactElement {
   const {appearance, setViewport, peopleData, peopleEnabled, onBasemapFailure, onPeoplePress} =
     useMapViewModel()
+  const {turfActive} = useTurfContext()
   const appearanceRef = useRef(appearance)
   const previousAppearanceRef = useRef<string | null>(null)
   const hostRef = useRef<View>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const fallbackUsedRef = useRef(false)
   const peopleEnabledRef = useRef(peopleEnabled)
+  const turfActiveRef = useRef(turfActive)
 
   appearanceRef.current = appearance
   peopleEnabledRef.current = peopleEnabled
+  turfActiveRef.current = turfActive
+
+  useTurfMapWeb(mapRef)
 
   const syncViewport = useCallback(
     (map: maplibregl.Map): void => {
@@ -164,6 +171,10 @@ export function MapView(): ReactElement {
     })
 
     map.on('click', event => {
+      if (turfActiveRef.current) {
+        return
+      }
+
       const features = map.queryRenderedFeatures(event.point, {
         layers: [PEOPLE_CIRCLE_LAYER_ID, PEOPLE_COUNT_LAYER_ID],
       })

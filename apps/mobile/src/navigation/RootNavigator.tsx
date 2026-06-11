@@ -8,6 +8,7 @@ import {TabBarBridge} from '@/components/TabBarBridge'
 import type {RootTabParamList} from '@/navigation/linking'
 import {MapScreen} from '@/screens/MapScreen'
 import {SettingsScreen} from '@/screens/SettingsScreen'
+import {TurfScreen} from '@/screens/TurfScreen'
 
 const Tab = createBottomTabNavigator<RootTabParamList>()
 
@@ -39,6 +40,16 @@ export function RootNavigator({onTabBarChange}: RootNavigatorProps): ReactElemen
         options={{
           sceneStyle: Platform.select({
             web: {backgroundColor: 'transparent', pointerEvents: 'none'},
+            default: {backgroundColor: 'transparent'},
+          }),
+        }}
+      />
+      <Tab.Screen
+        name="Turf"
+        component={TurfScreen}
+        options={{
+          sceneStyle: Platform.select({
+            web: {backgroundColor: 'transparent', pointerEvents: 'box-none'},
             default: {backgroundColor: 'transparent'},
           }),
         }}

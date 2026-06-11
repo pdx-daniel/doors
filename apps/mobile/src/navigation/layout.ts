@@ -1,3 +1,9 @@
+/** Vertical space taken by the turf sub-toolbar pill. */
+export const TURF_SUB_TOOLBAR_HEIGHT = 44
+
+/** Gap between main nav and turf sub-toolbar. */
+export const TURF_SUB_TOOLBAR_GAP = 8
+
 /** Vertical space taken by the floating nav pill (padding + label row). */
 export const FLOATING_NAV_HEIGHT = 56
 
@@ -44,4 +50,20 @@ export function getFloatingPanelInsets(
     top: contentInsets.paddingTop,
     bottom: contentInsets.paddingBottom,
   }
+}
+
+/**
+ * Absolute positioning for the turf sub-toolbar below (web) or above (native) the main nav.
+ */
+export function getTurfSubToolbarInsets(
+  insets: {top: number; bottom: number},
+  isWeb: boolean,
+): {top?: number; bottom?: number} {
+  const navOffset = FLOATING_NAV_HEIGHT + FLOATING_NAV_MARGIN + TURF_SUB_TOOLBAR_GAP
+
+  if (isWeb) {
+    return {top: insets.top + navOffset}
+  }
+
+  return {bottom: insets.bottom + navOffset}
 }

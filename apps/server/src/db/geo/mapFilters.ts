@@ -2,6 +2,9 @@ import type {Bbox, RadiusFilter} from '@doors/api/geo/bbox'
 import type postgres from 'postgres'
 
 import type {SqlClient} from '../client'
+import {buildPolygonGeometrySql, type PolygonMode} from './polygonFilter'
+
+export type {PolygonMode} from './polygonFilter'
 
 /** Shared geo and search filters for map queries. */
 export type MapPeopleFilters = {
@@ -9,6 +12,7 @@ export type MapPeopleFilters = {
   bbox?: Bbox | undefined
   radius?: RadiusFilter | undefined
   polygonGeoJson?: string | undefined
+  polygonMode?: PolygonMode | undefined
   locationType?: string | undefined
   query?: string | undefined
   jsonPath?: string | undefined
@@ -48,13 +52,17 @@ export function buildMapWhereClause(
   sql: SqlClient,
   filters: MapPeopleFilters,
 ): postgres.PendingQuery<postgres.Row[]> {
+  const polygonGeometry = filters.polygonGeoJson
+    ? buildPolygonGeometrySql(sql, filters.polygonGeoJson, filters.polygonMode ?? 'union')
+    : null
+
   return sql`
     p.workspace_id = ${filters.workspaceId}
     AND p.location_id IS NOT NULL
     AND l.geom IS NOT NULL
     ${filters.bbox ? sql`AND l.geom && ST_MakeEnvelope(${filters.bbox.west}, ${filters.bbox.south}, ${filters.bbox.east}, ${filters.bbox.north}, 4326)` : sql``}
     ${filters.radius ? sql`AND ST_DWithin(l.geom::geography, ST_SetSRID(ST_MakePoint(${filters.radius.lng}, ${filters.radius.lat}), 4326)::geography, ${filters.radius.meters})` : sql``}
-    ${filters.polygonGeoJson ? sql`AND ST_Intersects(l.geom, ST_SetSRID(ST_GeomFromGeoJSON(${filters.polygonGeoJson}), 4326))` : sql``}
+    ${polygonGeometry ? sql`AND ST_Intersects(l.geom, ${polygonGeometry})` : sql``}
     ${filters.query ? sql`AND (p.search_vector @@ plainto_tsquery('english', ${filters.query}) OR l.search_vector @@ plainto_tsquery('english', ${filters.query}))` : sql``}
     ${filters.locationType ? sql`AND l.location_type = ${filters.locationType}` : sql``}
     ${filters.jsonPath ? sql`AND p.metadata @? ${filters.jsonPath}` : sql``}

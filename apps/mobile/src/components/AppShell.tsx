@@ -11,13 +11,15 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context'
 
 import {FloatingNavBar} from '@/components/FloatingNavBar'
 import {MapView} from '@/components/MapView'
+import {TurfSubToolbar} from '@/components/TurfSubToolbar'
 import {MAP_ATTRIBUTION} from '@/constants/map'
+import {TurfProvider} from '@/contexts/TurfContext'
 import {useMapAppearance} from '@/hooks/useMapAppearance'
 import {FLOATING_NAV_HEIGHT, FLOATING_NAV_MARGIN} from '@/navigation/layout'
 import type {RootTabParamList} from '@/navigation/linking'
 import {linking} from '@/navigation/linking'
 import {RootNavigator} from '@/navigation/RootNavigator'
-import type {RootTabRouteName} from '@/navigation/routes'
+import {MAP_INTERACTIVE_ROUTES, type RootTabRouteName} from '@/navigation/routes'
 
 /**
  * App shell: persistent map layer with navigation and attribution overlays.
@@ -56,11 +58,13 @@ export function AppShell(): ReactElement {
       onReady={handleNavigationReady}
       onStateChange={handleNavigationStateChange}
       ref={navigationRef}>
-      <AppShellBody
-        activeRoute={activeRoute}
-        onTabBarChange={handleTabBarChange}
-        tabBarProps={tabBarProps}
-      />
+      <TurfProvider activeRoute={activeRoute}>
+        <AppShellBody
+          activeRoute={activeRoute}
+          onTabBarChange={handleTabBarChange}
+          tabBarProps={tabBarProps}
+        />
+      </TurfProvider>
     </NavigationContainer>
   )
 }
@@ -79,7 +83,7 @@ function AppShellBody({activeRoute, tabBarProps, onTabBarChange}: AppShellBodyPr
   const isWeb = Platform.OS === 'web'
 
   // Raise the map above transparent nav scenes so pan/zoom reach MapLibre on web and native.
-  const mapInteractive = activeRoute === 'Map'
+  const mapInteractive = MAP_INTERACTIVE_ROUTES.includes(activeRoute)
 
   // Keep attribution above the bottom nav on native; near bottom-left on web.
   const attributionBottom = isWeb
@@ -111,6 +115,11 @@ function AppShellBody({activeRoute, tabBarProps, onTabBarChange}: AppShellBodyPr
       <View style={styles.navigationLayer} pointerEvents={mapInteractive ? 'none' : 'box-none'}>
         <RootNavigator onTabBarChange={onTabBarChange} />
       </View>
+      {activeRoute === 'Turf' ? (
+        <View pointerEvents="box-none" style={styles.turfToolbarLayer}>
+          <TurfSubToolbar />
+        </View>
+      ) : null}
       {tabBarProps ? (
         <View style={styles.tabBarLayer} pointerEvents="box-none">
           <FloatingNavBar {...tabBarProps} />
@@ -160,6 +169,10 @@ const styles = StyleSheet.create({
   navigationLayer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 10,
+  },
+  turfToolbarLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 18,
   },
   tabBarLayer: {
     ...StyleSheet.absoluteFillObject,
