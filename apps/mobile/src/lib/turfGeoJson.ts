@@ -105,6 +105,66 @@ export function findNearDraftVertexIndex(
 }
 
 /**
+ * Returns exterior ring vertices (without the closing duplicate) from a polygon.
+ */
+export function getPolygonExteriorVertices(polygon: GeoJsonPolygon): [number, number][] {
+  const ring = polygon.coordinates[0] ?? []
+
+  return ring.slice(0, -1) as [number, number][]
+}
+
+/**
+ * Removes a vertex from a polygon when the result would still be valid.
+ */
+export function removePolygonVertex(
+  polygon: GeoJsonPolygon,
+  vertexIndex: number,
+): GeoJsonPolygon | null {
+  const vertices = getPolygonExteriorVertices(polygon)
+  if (vertexIndex < 0 || vertexIndex >= vertices.length) {
+    return null
+  }
+
+  if (vertices.length <= MIN_TURF_VERTICES) {
+    return null
+  }
+
+  const nextVertices = vertices.filter((_, index) => index !== vertexIndex)
+
+  return closePolygonRing(nextVertices)
+}
+
+/**
+ * Finds the nearest polygon vertex to a map click within pixelRadius.
+ */
+export function findNearestVertexIndex(
+  map: {project: (lngLat: {lng: number; lat: number}) => {x: number; y: number}},
+  click: {lng: number; lat: number},
+  vertices: [number, number][],
+  pixelRadius = 14,
+): number | null {
+  const clickPoint = map.project(click)
+  let bestIndex: number | null = null
+  let bestDistance = pixelRadius
+
+  for (let index = 0; index < vertices.length; index += 1) {
+    const vertex = vertices[index]
+    if (!vertex) {
+      continue
+    }
+
+    const projected = map.project({lng: vertex[0], lat: vertex[1]})
+    const distance = Math.hypot(projected.x - clickPoint.x, projected.y - clickPoint.y)
+    if (distance <= bestDistance) {
+      bestDistance = distance
+      bestIndex = index
+    }
+  }
+
+  return bestIndex
+}
+
+/**
  * Reads a draft vertex index from map feature query results.
  */
 export function getDraftVertexIndexFromFeatures(

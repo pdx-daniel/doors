@@ -19,7 +19,19 @@ import {FLOATING_NAV_HEIGHT, FLOATING_NAV_MARGIN} from '@/navigation/layout'
 import type {RootTabParamList} from '@/navigation/linking'
 import {linking} from '@/navigation/linking'
 import {RootNavigator} from '@/navigation/RootNavigator'
-import {MAP_INTERACTIVE_ROUTES, type RootTabRouteName} from '@/navigation/routes'
+import {MAP_INTERACTIVE_ROUTES, ROOT_TABS, type RootTabRouteName} from '@/navigation/routes'
+
+/** Reads the active tab from the browser URL on first paint (web refresh deep links). */
+function getInitialActiveRoute(): RootTabRouteName {
+  if (typeof window === 'undefined') {
+    return 'Map'
+  }
+
+  const path = window.location.pathname.replace(/^\//, '').replace(/\/$/, '')
+  const match = ROOT_TABS.find(tab => tab.path === path)
+
+  return match?.name ?? 'Map'
+}
 
 /**
  * App shell: persistent map layer with navigation and attribution overlays.
@@ -28,7 +40,7 @@ import {MAP_INTERACTIVE_ROUTES, type RootTabRouteName} from '@/navigation/routes
 export function AppShell(): ReactElement {
   const navigationRef = useNavigationContainerRef<RootTabParamList>()
   const [tabBarProps, setTabBarProps] = useState<BottomTabBarProps | null>(null)
-  const [activeRoute, setActiveRoute] = useState<RootTabRouteName>('Map')
+  const [activeRoute, setActiveRoute] = useState<RootTabRouteName>(getInitialActiveRoute)
 
   const handleTabBarChange = useCallback((props: BottomTabBarProps): void => {
     setTabBarProps(props)

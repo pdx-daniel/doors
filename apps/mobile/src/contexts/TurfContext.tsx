@@ -18,6 +18,7 @@ type TurfContextValue = {
   turfsLoading: boolean
   selectedTurfIds: ReadonlySet<string>
   editingTurfId: string | null
+  editingGeometry: GeoJsonPolygon | null
   editingName: string
   setEditingName: (name: string) => void
   draftVertices: [number, number][]
@@ -54,6 +55,7 @@ export function TurfProvider({activeRoute, children}: TurfProviderProps): ReactE
   const [toolMode, setToolModeState] = useState<TurfToolMode>('select')
   const [selectedTurfIds, setSelectedTurfIds] = useState<Set<string>>(() => new Set())
   const [editingTurfId, setEditingTurfId] = useState<string | null>(null)
+  const [editingGeometry, setEditingGeometry] = useState<GeoJsonPolygon | null>(null)
   const [editingName, setEditingName] = useState('')
   const [draftVertices, setDraftVertices] = useState<[number, number][]>([])
   const [panModifierActive, setPanModifierActive] = useState(false)
@@ -65,12 +67,14 @@ export function TurfProvider({activeRoute, children}: TurfProviderProps): ReactE
     setToolModeState(mode)
     setDraftVertices([])
     setEditingTurfId(null)
+    setEditingGeometry(null)
     setEditingName('')
   }, [])
 
   const clearSelection = useCallback((): void => {
     setSelectedTurfIds(new Set())
     setEditingTurfId(null)
+    setEditingGeometry(null)
     setEditingName('')
   }, [])
 
@@ -86,14 +90,14 @@ export function TurfProvider({activeRoute, children}: TurfProviderProps): ReactE
       return next
     })
     setEditingTurfId(null)
+    setEditingGeometry(null)
     setEditingName('')
   }, [])
 
   const startDraw = useCallback((): void => {
     setToolMode('draw')
     setDraftVertices([])
-    clearSelection()
-  }, [clearSelection, setToolMode])
+  }, [setToolMode])
 
   const cancelDraw = useCallback((): void => {
     setDraftVertices([])
@@ -138,11 +142,13 @@ export function TurfProvider({activeRoute, children}: TurfProviderProps): ReactE
 
     const turf = turfs.find(entry => entry.id === turfId)
     setEditingTurfId(turfId)
+    setEditingGeometry((turf?.geometry as GeoJsonPolygon | undefined) ?? null)
     setEditingName(turf?.name ?? '')
   }, [selectedTurfIds, turfs])
 
   const cancelEditMode = useCallback((): void => {
     setEditingTurfId(null)
+    setEditingGeometry(null)
     setEditingName('')
   }, [])
 
@@ -153,6 +159,7 @@ export function TurfProvider({activeRoute, children}: TurfProviderProps): ReactE
 
     await updateTurf(editingTurfId, {name: editingName})
     setEditingTurfId(null)
+    setEditingGeometry(null)
     setEditingName('')
   }, [editingName, editingTurfId, updateTurf])
 
@@ -162,6 +169,7 @@ export function TurfProvider({activeRoute, children}: TurfProviderProps): ReactE
         return
       }
 
+      setEditingGeometry(geometry)
       await updateTurf(editingTurfId, {geometry})
     },
     [editingTurfId, updateTurf],
@@ -182,6 +190,7 @@ export function TurfProvider({activeRoute, children}: TurfProviderProps): ReactE
         })
         if (editingTurfId === turfId) {
           setEditingTurfId(null)
+          setEditingGeometry(null)
           setEditingName('')
         }
       }
@@ -204,6 +213,7 @@ export function TurfProvider({activeRoute, children}: TurfProviderProps): ReactE
       turfsLoading,
       selectedTurfIds,
       editingTurfId,
+      editingGeometry,
       editingName,
       setEditingName,
       draftVertices,
@@ -233,6 +243,7 @@ export function TurfProvider({activeRoute, children}: TurfProviderProps): ReactE
       completeDraftDraw,
       confirmDeleteTurf,
       draftVertices,
+      editingGeometry,
       editingName,
       editingTurfId,
       enterEditMode,

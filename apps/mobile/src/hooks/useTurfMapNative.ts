@@ -1,12 +1,18 @@
 import type {GeoJsonPolygon} from '@doors/api/geo/geoJson'
 import type {PressEvent, PressEventWithFeatures} from '@maplibre/maplibre-react-native'
-import {useCallback, useEffect, useState} from 'react'
+import {useCallback, useEffect, useRef, useState} from 'react'
 import type {NativeSyntheticEvent} from 'react-native'
 
 import {useTurfContext} from '@/contexts/TurfContext'
 import {useTurfMapLayerData} from '@/hooks/useTurfMapLayerData'
 import {findTurfAtCoordinate} from '@/lib/pointInPolygon'
-import {findNearDraftVertexIndex, isNearFirstVertex, MIN_TURF_VERTICES} from '@/lib/turfGeoJson'
+import {
+  findNearDraftVertexIndex,
+  getPolygonExteriorVertices,
+  isNearFirstVertex,
+  MIN_TURF_VERTICES,
+  removePolygonVertex,
+} from '@/lib/turfGeoJson'
 
 /** Result of native turf map press handlers. */
 export type TurfMapNativeHandlers = {
@@ -25,19 +31,30 @@ export type TurfMapNativeHandlers = {
 export function useTurfMapNative(): TurfMapNativeHandlers {
   const turfContext = useTurfContext()
   const [draggingVertexIndex, setDraggingVertexIndex] = useState<number | null>(null)
+  const lastVertexTapRef = useRef<{index: number; time: number} | null>(null)
 
   const editVertexData =
     turfContext.editingTurfId !== null
-      ? ((turfContext.turfs.find(entry => entry.id === turfContext.editingTurfId)?.geometry as
+      ? (turfContext.editingGeometry ??
+        (turfContext.turfs.find(entry => entry.id === turfContext.editingTurfId)?.geometry as
           | GeoJsonPolygon
-          | undefined) ?? null)
+          | undefined) ??
+        null)
       : null
 
   useEffect(() => {
     if (!turfContext.turfActive) {
       setDraggingVertexIndex(null)
+      lastVertexTapRef.current = null
     }
   }, [turfContext.turfActive])
+
+  useEffect(() => {
+    if (!turfContext.editingTurfId) {
+      lastVertexTapRef.current = null
+      setDraggingVertexIndex(null)
+    }
+  }, [turfContext.editingTurfId])
 
   const getClickCoordinate = useCallback(
     (
@@ -91,8 +108,7 @@ export function useTurfMapNative(): TurfMapNativeHandlers {
       }
 
       if (turfContext.editingTurfId && editVertexData?.type === 'Polygon') {
-        const ring = editVertexData.coordinates[0] ?? []
-        const vertices = ring.slice(0, -1) as [number, number][]
+        const vertices = getPolygonExteriorVertices(editVertexData)
 
         if (draggingVertexIndex !== null) {
           const nextRing = vertices.map((vertex, index) =>
@@ -104,11 +120,30 @@ export function useTurfMapNative(): TurfMapNativeHandlers {
             coordinates: [nextRing],
           })
           setDraggingVertexIndex(null)
+          lastVertexTapRef.current = null
           return
         }
 
-        const nearIndex = vertices.findIndex(vertex => isNearFirstVertex(click, vertex, 0.0002))
+        const nearIndex = vertices.findIndex(vertex => isNearFirstVertex(click, vertex, 0.00035))
         if (nearIndex >= 0) {
+          const now = Date.now()
+          const lastTap = lastVertexTapRef.current
+          if (
+            lastTap &&
+            lastTap.index === nearIndex &&
+            now - lastTap.time < 400 &&
+            vertices.length > MIN_TURF_VERTICES
+          ) {
+            const updated = removePolygonVertex(editVertexData, nearIndex)
+            if (updated) {
+              void turfContext.updateEditingGeometry(updated)
+            }
+
+            lastVertexTapRef.current = null
+            return
+          }
+
+          lastVertexTapRef.current = {index: nearIndex, time: now}
           setDraggingVertexIndex(nearIndex)
         }
 

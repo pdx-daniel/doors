@@ -15,12 +15,27 @@ export type TurfMapLayerData = {
  * Builds turf and draft GeoJSON collections from TurfContext state.
  */
 export function useTurfMapLayerData(): TurfMapLayerData {
-  const {turfActive, turfs, selectedTurfIds, draftVertices} = useTurfContext()
+  const {
+    turfActive,
+    turfs,
+    selectedTurfIds,
+    draftVertices,
+    toolMode,
+    editingTurfId,
+    editingGeometry,
+  } = useTurfContext()
 
-  const turfData = useMemo(
-    () => buildTurfFeatureCollection(turfs, selectedTurfIds),
-    [selectedTurfIds, turfs],
-  )
+  const turfData = useMemo(() => {
+    const turfsForDisplay =
+      editingTurfId !== null && editingGeometry !== null
+        ? turfs.map(turf =>
+            turf.id === editingTurfId ? {...turf, geometry: editingGeometry} : turf,
+          )
+        : turfs
+    const highlightedIds = toolMode === 'draw' ? new Set<string>() : selectedTurfIds
+
+    return buildTurfFeatureCollection(turfsForDisplay, highlightedIds)
+  }, [editingGeometry, editingTurfId, selectedTurfIds, toolMode, turfs])
 
   const draftData = useMemo((): GeoJsonFeatureCollection => {
     if (draftVertices.length === 0) {
